@@ -15,7 +15,6 @@ function flushOutbox() {
     return;
   }
 
-  var current = accounts.current();
   var message = outboxLatest;
 
   outboxLatest = null;
@@ -23,6 +22,8 @@ function flushOutbox() {
   if (!message) {
     return;
   }
+
+  var current = accounts.current();
 
   if (message.ACCOUNT_ID !== current.id || message.ACCOUNT_REV !== current.revision) {
     if (outboxLatest) {

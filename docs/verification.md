@@ -6,7 +6,7 @@ This document records what the repository can verify automatically and which che
 
 | Area | Check | Status | Coverage and limits |
 | --- | --- | --- | --- |
-| JavaScript, C lint, formatting, and tests | `npm run check` | Passing on 18 October 2026 (64 tests) | Tests cover companion account isolation and settings flows, serialized WebView login and expiry, clipboard fallback, resource serialization, and provider parsing. JavaScript tests do not execute the C renderer. |
+| JavaScript, C lint, formatting, and tests | `npm run check` | Passing on 18 October 2026 (67 tests) | Tests cover companion account isolation and settings flows, serialized WebView login and expiry, clipboard fallback, resource serialization, and provider parsing. Profile-query tests also enforce one storage load per operation and no profile read when acknowledging an empty delivery queue. JavaScript tests do not execute the C renderer. |
 | Pebble app compilation | `.venv/bin/pebble build` | Passing on 18 October 2026 | Compiles and links all seven configured platforms: aplite, basalt, chalk, diorite, emery, flint, and gabbro. A successful build does not verify behavior on hardware. |
 | Quota display and watch animation | C lint and SDK build | Compiles; visual behavior not verified on device | The shared displayed-percentage policy is in `src/c/model/snapshot.h`. No automated test currently drives the watch renderer or animation timers. |
 | Browser settings rendering | Settings and serialization tests | Passing | Tests check initial account-button structure, escaped labels, generated script syntax, and WebView flows. Existing screenshots cover the account list and standalone pages, not the main inline editing flow. |

@@ -15,13 +15,18 @@ function ordered(state) {
  * @returns {?Object} Loaded profile record, or null when no matching ID exists.
  */
 function get(id) {
-  var state = load();
+  return find(load(), id);
+}
 
-  return (
-    state.accounts.filter(function (a) {
-      return a.id === id;
-    })[0] || null
-  );
+// Resolve against one loaded state; avoid parsing the entire profile store again.
+function find(state, id) {
+  for (var i = 0; i < state.accounts.length; i++) {
+    if (state.accounts[i].id === id) {
+      return state.accounts[i];
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -32,7 +37,7 @@ function get(id) {
 function current() {
   var state = load();
 
-  return get(state.selectedId) || ordered(state)[0];
+  return find(state, state.selectedId) || state.accounts[0];
 }
 
 /**
@@ -43,8 +48,8 @@ function view() {
   var state = load();
 
   return {
-    selectedId: current().id,
-    accounts: ordered(state).map(function (a) {
+    selectedId: (find(state, state.selectedId) || state.accounts[0]).id,
+    accounts: state.accounts.map(function (a) {
       return { id: a.id, provider: a.provider, label: a.label, configured: !!a.config };
     })
   };

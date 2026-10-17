@@ -18,7 +18,8 @@
   - [x] Decompose account storage/migration/operations, Codex sessions/login/quota, provider parsers, watch delivery, and settings browser modules.
   - [x] Extract application strings, numbers, patterns, UI templates, and styles into named resources with explicit per-module dependencies.
   - [x] Enforce the JS constants policy in ESLint and test browser resource serialization and shared validation.
-- [ ] Review performance and optimize bottlenecks.
+- [x] Review performance and optimize bottlenecks.
+  - [x] Remove repeated profile-store parsing and empty-outbox reads; record scope and operation counts in [performance review](performance.md).
 
 ## P2 — Development foundation
 
