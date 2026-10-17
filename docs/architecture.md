@@ -95,20 +95,18 @@ Phone previews use a fixed PNG canvas of 500 × 1200 pixels at scale factor 1. `
 
 ## Release packaging
 
-GitHub Actions runs `npm run check` and builds all configured platforms in
-separate parallel jobs on main branch pushes and pull requests. npm, pip, and
-the pinned Pebble SDK 4.33.1 are cached between runs. Each successful main
-branch push packages the SDK PBW, keeps its JavaScript source map beside it,
-and publishes both with a SHA-256 checksum to GitHub Releases after both jobs
-pass. Release versions use `MAJOR.MINOR.N`: the build reads the major/minor
-prefix from `package.json`, then uses the commit count through the pushed
-revision as `N`. Bump the package version's major or minor component to start a
-new release line. The build updates Pebble's `versionLabel` to the generated
-release version without changing the source package version. Reruns of the
-same commit resolve to the same version and skip publication if its release
-already exists. The release job creates its tag against the exact commit that
-triggered the workflow using `GITHUB_TOKEN`; no provider credentials are
-required.
+GitHub Actions runs `npm run check` and the all-platform SDK build in separate
+parallel jobs on main branch pushes and pull requests. npm, pip, and the pinned
+Pebble SDK 4.33.1 are cached between runs. The build job derives the release
+version from the `package.json` major/minor prefix and commit count through the
+pushed revision, updates Pebble's `versionLabel`, and exports the raw PBW and
+source map. After both test and build jobs pass on a main push, a packaging job
+compresses the PBW and prepares versioned assets; the release job then
+publishes them. Bump the package version's major or minor component to start a
+new release line. Reruns of the same commit resolve to the same version and
+skip publication if its release already exists. The release job creates its
+tag against the exact commit that triggered the workflow using `GITHUB_TOKEN`;
+no provider credentials are required.
 
 `npm run package:release` runs the Python standard-library tool
 `tools/package-release.py` against the existing SDK PBW. It produces a deflated
