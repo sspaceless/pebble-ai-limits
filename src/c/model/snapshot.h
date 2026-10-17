@@ -18,6 +18,17 @@ typedef struct {
   char name[32], account_id[48], account_name[64];
 } Snapshot;
 
+/** Percentage shown by the UI, or QUOTA_UNAVAILABLE for text-only/unknown quotas. */
+static inline int32_t quota_display_percent(const Quota *quota, int32_t provider) {
+  if (quota->value[0] || quota->left < 0) {
+    return QUOTA_UNAVAILABLE;
+  }
+  if (provider == PROVIDER_CLAUDE || provider == PROVIDER_GEMINI_CLI) {
+    return QUOTA_PERCENT_MAX - quota->left;
+  }
+  return quota->left;
+}
+
 /** Apply a partial phone message without storage, timer, or drawing side effects.
  * Missing fields retain their values, except an account/provider/revision change
  * clears the old snapshot first. Quotas update only with an UPDATED field.

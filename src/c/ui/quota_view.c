@@ -33,15 +33,10 @@ static void countdown(int32_t reset, char *buffer, size_t size) {
 static void quota(GContext *ctx, const Quota *q, int32_t provider, uint16_t progress, int y,
                   int row_height, int width, int margin) {
   char value[64];
-  int32_t display_percent = q->left;
-  // Claude Code and Gemini CLI show quota consumed; Codex shows allowance remaining.
-  if (!q->value[0] && q->left >= 0 &&
-      (provider == PROVIDER_CLAUDE || provider == PROVIDER_GEMINI_CLI)) {
-    display_percent = QUOTA_PERCENT_MAX - q->left;
-  }
+  int32_t display_percent = quota_display_percent(q, provider);
   if (q->value[0]) {
     snprintf(value, sizeof(value), "%s", q->value);
-  } else if (q->left < 0) {
+  } else if (display_percent < 0) {
     snprintf(value, sizeof(value), "--");
   } else {
     snprintf(value, sizeof(value), "%ld%%", (long)display_percent);

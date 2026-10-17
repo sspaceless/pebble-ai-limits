@@ -74,8 +74,8 @@ void watch_animation_stop_bars(void) {
 
 void watch_animation_start_bars(const Snapshot *data) {
   watch_animation_stop_bars();
-  if ((data->primary.left <= 0 || data->primary.value[0]) &&
-      (data->secondary.left <= 0 || data->secondary.value[0])) {
+  if (quota_display_percent(&data->primary, data->provider) <= 0 &&
+      quota_display_percent(&data->secondary, data->provider) <= 0) {
     return;
   }
   s_bar_elapsed = 0;
