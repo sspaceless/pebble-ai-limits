@@ -7,7 +7,11 @@ preview/
 ├── watches/
 │   ├── aplite/   Classic / Steel
 │   ├── basalt/   Time / Time Steel
-│   └── chalk/    Time Round
+│   ├── chalk/    Time Round
+│   ├── diorite/  Pebble 2
+│   ├── emery/    Time 2
+│   ├── flint/    Pebble 2 Duo
+│   └── gabbro/   Round 2
 └── phone/        Account-list and standalone-page screenshots
 ```
 
@@ -18,12 +22,12 @@ preview/
 | `aplite` | Classic / Steel | [Claude and Gemini screenshots](watches/aplite/) |
 | `basalt` | Time / Time Steel | [Claude and Gemini screenshots](watches/basalt/) |
 | `chalk` | Time Round | [Claude and Gemini screenshots](watches/chalk/) |
-| `diorite` | Pebble 2 | Not captured yet |
-| `emery` | Time 2 | Not captured yet |
-| `flint` | Pebble 2 Duo | Not captured yet |
-| `gabbro` | Round 2 | Not captured yet |
+| `diorite` | Pebble 2 | [Claude screenshot](watches/diorite/claude.png) |
+| `emery` | Time 2 | [Claude screenshot](watches/emery/claude.png) |
+| `flint` | Pebble 2 Duo | [Claude screenshot](watches/flint/claude.png) |
+| `gabbro` | Round 2 | [Claude screenshot](watches/gabbro/claude.png) |
 
-The retained watch captures show the current Claude/Gemini marks. Old Codex marks, letter-placeholder provider marks, legacy screens, diagnostic images, and animations containing old artwork have been removed. Current Codex, API-cap and animation captures still need to be produced.
+The watch screenshots use the matching SDK emulator and demonstration Claude quota data; no provider authentication was performed. The retained captures show the current Claude/Gemini marks. Old Codex marks, letter-placeholder provider marks, legacy screens, diagnostic images, and animations containing old artwork have been removed. Current Codex, API-cap and animation captures still need to be produced.
 
 For new platforms, add their first real screenshot under `watches/<SDK platform>/`. Choose the actual emulator/device platform; matching screen dimensions alone is not enough to assign a platform. Use provider names such as `codex.png` and `claude.png`, with descriptive names for interactions and animations.
 
