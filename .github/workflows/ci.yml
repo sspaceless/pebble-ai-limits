@@ -8,41 +8,82 @@ on:
       - 'v0.*.*'
   pull_request:
 
+env:
+  PEBBLE_SDK_VERSION: 4.33.1
+
 permissions:
   contents: read
 
 jobs:
-  check-and-build:
+  test:
     runs-on: ubuntu-24.04
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.13'
+          cache: pip
+          cache-dependency-path: |
+            requirements-dev.txt
+            .github/workflows/ci.yml
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Install check tools
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install -r requirements-dev.txt
+
+      - name: Run checks
+        run: npm run check
+
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: |
+            requirements-dev.txt
+            .github/workflows/ci.yml
 
       - name: Install Pebble SDK system libraries
         run: |
           sudo apt-get update
           sudo apt-get install --yes libsdl2-2.0-0 libglib2.0-0 libpixman-1-0 zlib1g libsndio7.0
 
-      - name: Install JavaScript dependencies
-        run: npm ci
+      - name: Cache Pebble SDK
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pebble-sdk
+          key: ${{ runner.os }}-${{ runner.arch }}-pebble-sdk-${{ env.PEBBLE_SDK_VERSION }}
 
       - name: Install Pebble build tools
         run: |
           python -m venv .venv
           .venv/bin/python -m pip install --upgrade pip
           .venv/bin/python -m pip install -r requirements-dev.txt pebble-tool==5.0.40
-          .venv/bin/pebble sdk install latest
+          .venv/bin/pebble sdk install "$PEBBLE_SDK_VERSION"
 
       - name: Check package version matches release tag
         if: startsWith(github.ref, 'refs/tags/')
@@ -52,9 +93,6 @@ jobs:
           VERSION="$(node -p "require('./package.json').version")"
           test "$RELEASE_TAG" = "v$VERSION"
 
-      - name: Run checks
-        run: npm run check
-
       - name: Build Pebble app
         run: .venv/bin/pebble build
 
@@ -62,6 +100,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           VERSION="$(node -p "require('./package.json').version")"
+          npm run package:release
           cp dist/codex-limits.pbw "dist/ai-limits-$VERSION.pbw"
           cp dist/codex-limits.js.map "dist/ai-limits-$VERSION.js.map"
           sha256sum "dist/ai-limits-$VERSION.pbw" "dist/ai-limits-$VERSION.js.map" > "dist/ai-limits-$VERSION.sha256"
@@ -75,7 +114,9 @@ jobs:
 
   release:
     if: startsWith(github.ref, 'refs/tags/')
-    needs: check-and-build
+    needs:
+      - test
+      - build
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -87,7 +128,6 @@ jobs:
           path: dist
 
       - name: Publish GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ github.ref_name }}

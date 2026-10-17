@@ -139,12 +139,14 @@ hooks if necessary, or `git hook run pre-commit` to check the installed hook
 without creating a commit.
 
 These are local checks and can be bypassed by Git options; shared validation
-runs in GitHub Actions. Pushes to `main` and pull requests run the
-checks and build all seven Pebble platforms. A tag such as `v0.1.0` must match
-the version in `package.json`; pushing it publishes the installable PBW, its
-JavaScript source map, and a SHA-256 checksum to [GitHub Releases](https://github.com/sspaceless/pebble-ai-limits/releases).
-The SDK build also runs there. Locally, it remains a separate check because it
-requires the full SDK environment.
+runs in GitHub Actions. Pushes to `main` and pull requests run checks
+and build all seven Pebble platforms in separate parallel jobs. The workflow
+caches npm, Python packages, and the pinned Pebble SDK between runs. A tag such
+as `v0.1.0` must match the version in `package.json`; pushing it publishes the
+installable PBW, its JavaScript source map, and a SHA-256 checksum to [GitHub
+Releases](https://github.com/sspaceless/pebble-ai-limits/releases) after both
+jobs pass. Locally, the SDK build remains a separate check because it requires
+the full SDK environment.
 
 `npm run check` enforces ESLint rules (including ES5 syntax for PebbleKit JS),
 C checks with cpplint, and exact Prettier/clang-format output, then runs the tests.
