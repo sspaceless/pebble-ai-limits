@@ -13,7 +13,8 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  checks:
+    name: Checks (lint, format, tests)
     runs-on: ubuntu-24.04
     steps:
       - name: Check out source
@@ -45,7 +46,8 @@ jobs:
       - name: Run checks
         run: npm run check
 
-  build:
+  pebble_build:
+    name: Build Pebble app (7 platforms)
     runs-on: ubuntu-24.04
     outputs:
       release_version: ${{ steps.release_version.outputs.version }}
@@ -80,12 +82,21 @@ jobs:
           path: ~/.local/share/pebble-sdk
           key: ${{ runner.os }}-${{ runner.arch }}-pebble-sdk-${{ env.PEBBLE_SDK_VERSION }}
 
-      - name: Install Pebble build tools
+      - name: Set up Pebble build tools and SDK
         run: |
           python -m venv .venv
           .venv/bin/python -m pip install --upgrade pip
           .venv/bin/python -m pip install -r requirements-dev.txt pebble-tool==5.0.40
-          .venv/bin/pebble sdk install "$PEBBLE_SDK_VERSION"
+          SDK_DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}"
+          if [ -d "$HOME/.pebble-sdk" ]; then
+            SDK_DATA_DIR="$HOME/.pebble-sdk"
+          fi
+          SDK_PATH="$SDK_DATA_DIR/pebble-sdk/SDKs/$PEBBLE_SDK_VERSION"
+          if [ -f "$SDK_PATH/sdk-core/manifest.json" ]; then
+            .venv/bin/pebble sdk activate "$PEBBLE_SDK_VERSION"
+          else
+            .venv/bin/pebble sdk install "$PEBBLE_SDK_VERSION"
+          fi
 
       - name: Set automatic release version
         id: release_version
@@ -108,14 +119,15 @@ jobs:
             build/pebble-codex-usage.pbw
             build/pebble-js-app.js.map
 
-  package:
+  package_release:
+    name: Package release artifacts
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs:
-      - test
-      - build
+      - checks
+      - pebble_build
     runs-on: ubuntu-24.04
     outputs:
-      release_version: ${{ needs.build.outputs.release_version }}
+      release_version: ${{ needs.pebble_build.outputs.release_version }}
     steps:
       - name: Check out source
         uses: actions/checkout@v7
@@ -133,7 +145,7 @@ jobs:
 
       - name: Package release artifacts
         env:
-          RELEASE_VERSION: ${{ needs.build.outputs.release_version }}
+          RELEASE_VERSION: ${{ needs.pebble_build.outputs.release_version }}
         run: |
           mkdir -p dist
           python tools/package-release.py build/pebble-codex-usage.pbw dist/codex-limits.pbw
@@ -148,9 +160,10 @@ jobs:
           name: release-artifacts
           path: dist/ai-limits-*
 
-  release:
+  publish_release:
+    name: Publish GitHub Release
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: package
+    needs: package_release
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -164,7 +177,7 @@ jobs:
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ needs.package.outputs.release_version }}
+          VERSION: ${{ needs.package_release.outputs.release_version }}
         run: |
           if gh release view "v$VERSION" >/dev/null 2>&1; then
             echo "Release v$VERSION already exists; skipping duplicate publication."

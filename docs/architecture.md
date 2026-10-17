@@ -97,8 +97,9 @@ Phone previews use a fixed PNG canvas of 500 × 1200 pixels at scale factor 1. `
 
 GitHub Actions runs `npm run check` and the all-platform SDK build in separate
 parallel jobs on main branch pushes and pull requests. npm, pip, and the pinned
-Pebble SDK 4.33.1 are cached between runs. The build job derives the release
-version from the `package.json` major/minor prefix and commit count through the
+Pebble SDK 4.33.1 are cached between runs; the build activates the cached SDK
+and installs it only on a cache miss. The build job derives the release version
+from the `package.json` major/minor prefix and commit count through the
 pushed revision, updates Pebble's `versionLabel`, and exports the raw PBW and
 source map. After both test and build jobs pass on a main push, a packaging job
 compresses the PBW and prepares versioned assets; the release job then
