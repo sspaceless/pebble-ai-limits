@@ -208,7 +208,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.package_release.outputs.release_version }}
         run: |
-          if gh release view "v$VERSION" >/dev/null 2>&1; then
+          if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "Release v$VERSION already exists; skipping duplicate publication."
             exit 0
           fi
@@ -219,4 +219,5 @@ jobs:
             "dist/ai-limits-$VERSION.sha256" \
             --title "AI Limits $VERSION" \
             --generate-notes \
-            --target "$GITHUB_SHA"
+            --target "$GITHUB_SHA" \
+            --repo "$GITHUB_REPOSITORY"
