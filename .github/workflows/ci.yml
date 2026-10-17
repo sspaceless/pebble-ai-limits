@@ -180,7 +180,10 @@ jobs:
           cp "$SOURCE_MAP_PATH" dist/codex-limits.js.map
           cp dist/codex-limits.pbw "dist/ai-limits-$RELEASE_VERSION.pbw"
           cp dist/codex-limits.js.map "dist/ai-limits-$RELEASE_VERSION.js.map"
-          sha256sum "dist/ai-limits-$RELEASE_VERSION.pbw" "dist/ai-limits-$RELEASE_VERSION.js.map" > "dist/ai-limits-$RELEASE_VERSION.sha256"
+          (
+            cd dist
+            sha256sum "ai-limits-$RELEASE_VERSION.pbw" "ai-limits-$RELEASE_VERSION.js.map" > "ai-limits-$RELEASE_VERSION.sha256"
+          )
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v7
@@ -213,11 +216,37 @@ jobs:
             exit 0
           fi
 
+          NOTES="$(cat <<EOF
+          ## AI Limits v$VERSION
+
+          Built from commit \`$GITHUB_SHA\` after the checks and seven-platform Pebble build passed.
+
+          ### Included files
+
+          - \`ai-limits-$VERSION.pbw\`: installable Pebble app for aplite, basalt, chalk, diorite, emery, flint, and gabbro.
+          - \`ai-limits-$VERSION.js.map\`: JavaScript source map for debugging.
+          - \`ai-limits-$VERSION.sha256\`: SHA-256 checksums for the PBW and source map.
+
+          ### Install
+
+          Download the PBW, transfer it to your paired phone, then install it using the Pebble mobile app.
+
+          ### Verify the downloads
+
+          Download all three files into the same directory and run:
+
+          \`\`\`sh
+          sha256sum -c ai-limits-$VERSION.sha256
+          \`\`\`
+          EOF
+          )"
+
           gh release create "v$VERSION" \
             "dist/ai-limits-$VERSION.pbw" \
             "dist/ai-limits-$VERSION.js.map" \
             "dist/ai-limits-$VERSION.sha256" \
             --title "AI Limits $VERSION" \
+            --notes "$NOTES" \
             --generate-notes \
             --target "$GITHUB_SHA" \
             --repo "$GITHUB_REPOSITORY"

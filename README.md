@@ -148,8 +148,12 @@ after the test and build jobs pass. Release versions use `MAJOR.MINOR.N`, based 
 `package.json` version and the Git commit count at the pushed revision. Bump
 `package.json` to `0.3.0` or `1.0.0` to start a new minor or major line.
 Rerunning CI for the same commit reuses its version and skips an already
-published release; pull requests do not publish. Locally, the SDK build remains
-a separate check because it requires the full SDK environment.
+published release; pull requests do not publish. Each release includes a brief
+installation guide, the CI commit, a generated changelog, and a SHA-256 file.
+Download all three assets into one directory and run
+`sha256sum -c ai-limits-VERSION.sha256` to verify the PBW and sourcemap.
+Locally, the SDK build remains a separate check because it requires the full
+SDK environment.
 
 `npm run check` enforces ESLint rules (including ES5 syntax for PebbleKit JS),
 C checks with cpplint, and exact Prettier/clang-format output, then runs the tests.
