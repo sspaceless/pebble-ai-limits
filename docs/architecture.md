@@ -96,13 +96,19 @@ Phone previews use a fixed PNG canvas of 500 × 1200 pixels at scale factor 1. `
 ## Release packaging
 
 GitHub Actions runs `npm run check` and builds all configured platforms in
-separate parallel jobs on main branch pushes, pull requests, and version tags
-matching `v0.*.*`. npm, pip, and the pinned Pebble SDK 4.33.1 are cached between
-runs. A release tag must exactly match the package version, which also supplies
-Pebble's `versionLabel`. Tag builds package the SDK PBW, keep its JavaScript
-source map beside it, and publish both with a SHA-256 checksum to GitHub
-Releases only after both jobs pass, using the repository's `GITHUB_TOKEN`; no
-provider credentials are required.
+separate parallel jobs on main branch pushes and pull requests. npm, pip, and
+the pinned Pebble SDK 4.33.1 are cached between runs. Each successful main
+branch push packages the SDK PBW, keeps its JavaScript source map beside it,
+and publishes both with a SHA-256 checksum to GitHub Releases after both jobs
+pass. Release versions use `MAJOR.MINOR.N`: the build reads the major/minor
+prefix from `package.json`, then uses the commit count through the pushed
+revision as `N`. Bump the package version's major or minor component to start a
+new release line. The build updates Pebble's `versionLabel` to the generated
+release version without changing the source package version. Reruns of the
+same commit resolve to the same version and skip publication if its release
+already exists. The release job creates its tag against the exact commit that
+triggered the workflow using `GITHUB_TOKEN`; no provider credentials are
+required.
 
 `npm run package:release` runs the Python standard-library tool
 `tools/package-release.py` against the existing SDK PBW. It produces a deflated

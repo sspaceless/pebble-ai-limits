@@ -1,6 +1,6 @@
 {
   "name": "pebble-codex-usage",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Illia",
   "description": "Subscription usage and API quota caps for AI providers on Pebble",
   "keywords": [

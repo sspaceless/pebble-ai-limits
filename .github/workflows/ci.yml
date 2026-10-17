@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    tags:
-      - 'v0.*.*'
   pull_request:
 
 env:
@@ -49,9 +47,13 @@ jobs:
 
   build:
     runs-on: ubuntu-24.04
+    outputs:
+      release_version: ${{ steps.release_version.outputs.version }}
     steps:
       - name: Check out source
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -85,35 +87,38 @@ jobs:
           .venv/bin/python -m pip install -r requirements-dev.txt pebble-tool==5.0.40
           .venv/bin/pebble sdk install "$PEBBLE_SDK_VERSION"
 
-      - name: Check package version matches release tag
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          RELEASE_TAG: ${{ github.ref_name }}
+      - name: Set automatic release version
+        id: release_version
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          VERSION="$(node -p "require('./package.json').version")"
-          test "$RELEASE_TAG" = "v$VERSION"
+          VERSION_PREFIX="$(node -p "require('./package.json').version" | sed 's/\.[^.]*$//')"
+          RELEASE_VERSION="$VERSION_PREFIX.$(git rev-list --count "$GITHUB_SHA")"
+          echo "version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+          npm version "$RELEASE_VERSION" --no-git-tag-version --allow-same-version
 
       - name: Build Pebble app
         run: .venv/bin/pebble build
 
       - name: Package release artifacts
-        if: startsWith(github.ref, 'refs/tags/')
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          RELEASE_VERSION: ${{ steps.release_version.outputs.version }}
         run: |
-          VERSION="$(node -p "require('./package.json').version")"
+          VERSION="$RELEASE_VERSION"
           npm run package:release
           cp dist/codex-limits.pbw "dist/ai-limits-$VERSION.pbw"
           cp dist/codex-limits.js.map "dist/ai-limits-$VERSION.js.map"
           sha256sum "dist/ai-limits-$VERSION.pbw" "dist/ai-limits-$VERSION.js.map" > "dist/ai-limits-$VERSION.sha256"
 
       - name: Upload release artifacts
-        if: startsWith(github.ref, 'refs/tags/')
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: release-artifacts
           path: dist/ai-limits-*
 
   release:
-    if: startsWith(github.ref, 'refs/tags/')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs:
       - test
       - build
@@ -130,11 +135,17 @@ jobs:
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ github.ref_name }}
-        run: >-
-          gh release create "$VERSION"
-          "dist/ai-limits-${VERSION#v}.pbw"
-          "dist/ai-limits-${VERSION#v}.js.map"
-          "dist/ai-limits-${VERSION#v}.sha256"
-          --title "AI Limits $VERSION"
-          --generate-notes
+          VERSION: ${{ needs.build.outputs.release_version }}
+        run: |
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "Release v$VERSION already exists; skipping duplicate publication."
+            exit 0
+          fi
+
+          gh release create "v$VERSION" \
+            "dist/ai-limits-$VERSION.pbw" \
+            "dist/ai-limits-$VERSION.js.map" \
+            "dist/ai-limits-$VERSION.sha256" \
+            --title "AI Limits $VERSION" \
+            --generate-notes \
+            --target "$GITHUB_SHA"
