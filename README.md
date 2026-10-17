@@ -155,9 +155,18 @@ with explicit serialized constants. See [project architecture and conventions](d
 ```sh
 npm run check
 .venv/bin/pebble build
-mkdir -p dist
-cp build/pebble-codex-usage.pbw dist/codex-limits.pbw
+npm run package:release
 ```
+
+`npm run package:release` creates `dist/codex-limits.pbw` from the existing SDK
+bundle using ZIP deflate compression. It preserves all runtime payloads and all
+seven platforms byte for byte, and saves the debug source map separately as
+`dist/codex-limits.js.map`. Keep that map with the matching release for diagnosis.
+The original SDK bundle and build source map remain in `build/`. Always build
+before packaging to avoid releasing stale code. The measured package shrank from
+589 KiB to 86.8 KiB; future sizes depend on the source. Archive integrity is tested;
+installation of the compressed release through the mobile app still needs a
+physical-device check. The original SDK PBW remains available for comparison.
 
 If message keys change, regenerate cached SDK output:
 

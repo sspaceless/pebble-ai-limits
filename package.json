@@ -21,7 +21,8 @@
     "check": "npm run lint && npm test",
     "lint:js:fix": "eslint . --fix --max-warnings 0",
     "prepare": "husky",
-    "generate:previews:phone": "node tools/generate-phone-previews.mjs"
+    "generate:previews:phone": "node tools/generate-phone-previews.mjs",
+    "package:release": ".venv/bin/python tools/package-release.py"
   },
   "pebble": {
     "displayName": "AI Limits",

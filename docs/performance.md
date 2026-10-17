@@ -49,3 +49,12 @@ render caches. Repeated watch persistence writes are another possible follow-up.
 This review did not measure provider latency, phone WebView startup, watch frame
 times, memory peaks, or battery use on hardware. No claim of an end-to-end speedup
 or hardware performance verification is made.
+
+## Release size
+
+The SDK bundle measured 603,323 bytes, including a 285,923-byte source map, and
+stored its ZIP entries without compression. Release packaging externalizes that
+map and deflates the remaining entries, producing 88,901 bytes (85.3% smaller).
+All seven watch platforms remain present; executable JS and C payloads are
+unchanged. This reduces transfer size without claiming reduced runtime memory or
+battery usage. Physical installation of this compressed package remains unverified.
