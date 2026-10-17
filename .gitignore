@@ -7,3 +7,7 @@ node_modules/
 __pycache__/
 .DS_Store
 .lock-waf*
+
+# Preview artifacts are images/animations, not saved HTML pages.
+preview/**/*.html
+preview/**/*.htm

@@ -26,12 +26,12 @@ Gemini CLI quotas are for Gemini CLI / Code Assist, not the Gemini website's cha
 ## Install and connect
 
 1. Install the current [Pebble mobile app](https://repebble.com/app) and pair your watch.
-2. Transfer `dist/codex-limits.pbw` to your iPhone using AirDrop or Files, open or share it with Pebble, and install it from the locker. Install over the existing version when upgrading.
+2. Build the installable package using [Building and testing](#building-and-testing), then transfer `dist/codex-limits.pbw` to your iPhone using AirDrop or Files, open or share it with Pebble, and install it from the locker. Install over the existing version when upgrading.
 3. Open **AI Limits** settings, tap an account to select it, or expand **+ Add account**, select a connection type, and name the account.
 4. Connect the account using the instructions below.
 5. Open the app on the watch. **UP / DOWN** cycles through every account in the saved order, including accounts that are not connected yet; **SELECT** refreshes the active account.
 
-The watch shows the provider and profile name. When there is only one account, its local profile name is hidden; the provider and available plan remain visible. Codex shows the percentage remaining, matching its usage allowance display. Claude subscription and Gemini CLI show the percentage used, matching their native usage displays. Their bars follow the same direction as their percentages. API connections show configured request/token caps in native units, not invented usage percentages. When explicit plan metadata is available, the header includes it, for example **Codex Plus** or **Claude Max**. Codex reads its usage response or login claims; Claude can use imported subscription metadata; Gemini can use the tier name returned during project discovery. API quotas do not imply a subscription plan, and unknown plans are omitted. Account identity is tracked separately from provider identity, so switching between two Codex or Claude accounts also clears the previous account's values. Cached data for the selected profile can appear immediately with its original timestamp while a fresh request runs. See [provider quota display conventions](docs/provider-quota-conventions.md) for sources and details.
+The watch shows the provider and profile name. When there is only one account, its local profile name is hidden; the provider and available plan remain visible. Codex shows the percentage remaining, matching its usage allowance display. Claude subscription and Gemini CLI show the percentage used, matching their native usage displays. Their bars follow the same direction as their percentages. API connections show configured request/token caps in native units, not invented usage percentages. When explicit plan metadata is available, the header includes it, for example **Codex Plus** or **Claude Max**. Codex reads its usage response or login claims; Claude can use imported subscription metadata; Gemini can use the tier name returned during project discovery. API quotas do not imply a subscription plan, and unknown plans are omitted. Account identity is tracked separately from provider identity, so switching between two Codex or Claude accounts also clears the previous account's values. Cached data for the selected profile can appear immediately with its original timestamp while a fresh request runs. See [provider support](#provider-support) and [sources](#sources) for the display rules and provider references.
 
 In the account list, drag the handles with a mouse or finger, then tap **Save and close**. You can mix providers in any order. Keyboard users can focus a handle and use Arrow Up / Arrow Down. Use the **⋯** menu beside an account to reconnect, rename, or remove it. This order drives UP / DOWN on the watch.
 
@@ -114,26 +114,48 @@ Tokens are stored in the companion's `localStorage`, not on the watch or in conf
 
 ## Building and testing
 
-Requires Node.js 20.19+, 22.13+, or 24+, Python 3.13, `pebble-tool`, and the current Pebble SDK. The local `.venv` is prepared on this computer.
+Requires Node.js 20.19+, 22.13+, or 24+, Python 3.13, `pebble-tool`, and a separately installed Pebble SDK with all seven target platforms. `.venv/` and `dist/` are local directories excluded from Git.
 
-Install the pinned development tools before running checks:
+On a fresh checkout, create the Python environment first (skip this command if `.venv` already exists):
+
+```sh
+python3.13 -m venv .venv
+```
+
+Install the pinned development tools and the Pebble CLI before running checks. The existing local environment uses `pebble-tool` 5.0.40:
 
 ```sh
 npm ci
 .venv/bin/python -m ensurepip
-.venv/bin/python -m pip install -r requirements-dev.txt
+.venv/bin/python -m pip install -r requirements-dev.txt pebble-tool==5.0.40
 ```
+
+`npm ci` also installs Husky's Git hooks through the `prepare` script. Before
+committing, install the Python development tools above: the pre-commit hook runs
+`npm run check` against the current working tree, including ESLint, C lint,
+Prettier/clang-format checks, and all tests. Any nonzero exit blocks the commit;
+the hook does not auto-fix or stage files. Run `npm run prepare` to reinstall the
+hooks if necessary, or `git hook run pre-commit` to check the installed hook
+without creating a commit.
+
+These are local checks and can be bypassed by Git options; mandatory shared
+validation requires CI and branch protection. The Pebble SDK build remains a
+separate check because it requires the full SDK environment.
 
 `npm run check` enforces ESLint rules (including ES5 syntax for PebbleKit JS),
 C checks with cpplint, and exact Prettier/clang-format output, then runs the tests.
-`npm run format` fixes formatting; `npm run lint:js` and `npm run lint:c` run the
+`npm run format` applies ESLint fixes and formatting; `npm run lint:js:fix` runs the ESLint fixes alone; `npm run lint:js` and `npm run lint:c` run the
 language checks separately. C checks focus on braces, multiline comments, and
 unsafe runtime calls; SDK compiler warnings remain part of the build check.
 The icon generator applies the same Prettier configuration to its output.
+Built-in ESLint rules check runtime application strings, magic numbers, and regex patterns;
+named values live in `src/pkjs/resources/`. Browser scripts are regular ES5 modules
+with explicit serialized constants. See [project architecture and conventions](docs/architecture.md), the [verification matrix](docs/verification.md), and [planned work](docs/TODO.md).
 
 ```sh
 npm run check
 .venv/bin/pebble build
+mkdir -p dist
 cp build/pebble-codex-usage.pbw dist/codex-limits.pbw
 ```
 
@@ -160,7 +182,11 @@ npm run check:gemini
 
 These checks never print credentials or save them to this repository. The Gemini check refreshes an access token in memory if necessary, then reads account/quota metadata without changing the CLI credential file.
 
-The automated tests cover provider parsing, missing data, model selection, API caps versus remaining quota, Google pagination, OAuth imports/renewal, source timestamps, account isolation, migration, renaming, deletion, independent token rotation, login binding, cancellation, switching during requests, account reordering, staying on the settings page during edits, and atomic settings saves without overwriting renewed credentials. Codex has been checked against a real account. Classic emulator previews cover Codex, Claude, Gemini CLI, and Claude API views using simulated data. Emulator captures verify provider icons, progress filling, and sync-icon rotation. Claude and API-provider adapters require account-specific device testing; the available local Gemini account returned HTTP 403 with `SUBSCRIPTION_REQUIRED` during the live check. This account cannot validate live Gemini quotas; eligible credentials are required. Full iOS 27 login/import and background behavior still require testing on a physical phone.
+The automated tests cover provider parsing, missing data, model selection, API caps versus remaining quota, Google pagination, OAuth imports/renewal, source timestamps, account isolation, migration, renaming, deletion, independent token rotation, login binding, cancellation, switching during requests, account reordering, staying on the settings page during edits, and atomic settings saves without overwriting renewed credentials. Codex has been checked against a real account. Retained emulator previews cover Claude and Gemini CLI on Classic, Time, and Time Round using simulated data. Current Codex, API-cap, progress-animation, and sync-rotation captures still need to be refreshed. Claude and API-provider adapters require account-specific device testing; the available local Gemini account returned HTTP 403 with `SUBSCRIPTION_REQUIRED` during the live check. This account cannot validate live Gemini quotas; eligible credentials are required. Full iOS 27 login/import and background behavior still require testing on a physical phone.
+
+## Preview assets
+
+[`preview/`](preview/README.md) groups watch screenshots and GIF animations by SDK platform under `watches/`; phone settings screenshots live under `phone/`, with standalone icon studies under `icons/` only when needed. Keep previews as images rather than saved HTML pages. Phone previews use PNG at a fixed 500 × 1200 pixels and demo data. Two show the account list; the other five use standalone page renderers still present in the code, so they do not show the inline editing flow used by the main settings page. Run `npm run generate:previews:phone` to regenerate the full set when the interface changes.
 
 ## Sources
 
@@ -173,4 +199,4 @@ The automated tests cover provider parsing, missing data, model selection, API c
 - [Gemini API rate limits](https://ai.google.dev/gemini-api/docs/rate-limits)
 - [Google Service Usage quota schema](https://docs.cloud.google.com/service-usage/docs/reference/rest/v1beta1/services.consumerQuotaMetrics.limits)
 
-Provider icon sources are documented in [`assets/BRANDS.md`](assets/BRANDS.md). The SVG files in `assets/` are the canonical source for phone settings; after changing one, run `npm run generate:icons` to refresh the bundled PebbleKit JS module. Watch marks are drawn in `src/c/main.c`; the Codex cloud mark gets a blue-violet color treatment on color displays and a black-and-white treatment on monochrome displays.
+Provider icon sources are documented in [`assets/BRANDS.md`](assets/BRANDS.md). The SVG files in `assets/` are the canonical source for phone settings; after changing one, run `npm run generate:icons` to refresh `src/pkjs/resources/provider-svg.js`. Watch marks are drawn in `src/c/ui/icons.c`; the Codex cloud mark gets a blue-violet color treatment on color displays and a black-and-white treatment on monochrome displays.

@@ -20,7 +20,8 @@
     "format:check": "prettier --check \"src/pkjs/**/*.js\" \"tools/*.mjs\" \"tests/*.mjs\" \"*.mjs\" \"*.json\" && node tools/format-c.mjs",
     "check": "npm run lint && npm test",
     "lint:js:fix": "eslint . --fix --max-warnings 0",
-    "prepare": "husky"
+    "prepare": "husky",
+    "generate:previews:phone": "node tools/generate-phone-previews.mjs"
   },
   "pebble": {
     "displayName": "AI Limits",
