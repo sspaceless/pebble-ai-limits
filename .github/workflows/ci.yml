@@ -110,13 +110,32 @@ jobs:
       - name: Build Pebble app
         run: .venv/bin/pebble build
 
+      - name: Prepare canonical Pebble build artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          PBW_PATH="$(find . -type f -name '*.pbw' \
+            -not -path './.git/*' \
+            -not -path './.venv/*' \
+            -not -path './node_modules/*' \
+            -print -quit)"
+          if [ -z "$PBW_PATH" ]; then
+            echo "Pebble build did not produce a PBW. Found these PBW files:"
+            find . -type f -name '*.pbw' \
+              -not -path './.git/*' \
+              -not -path './.venv/*' \
+              -not -path './node_modules/*' \
+              -print
+            exit 1
+          fi
+          cp "$PBW_PATH" build/pebble-release-input.pbw
+
       - name: Upload Pebble build outputs
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v7
         with:
           name: pebble-build
           path: |
-            build/pebble-codex-usage.pbw
+            build/pebble-release-input.pbw
             build/pebble-js-app.js.map
           if-no-files-found: error
 
@@ -148,7 +167,7 @@ jobs:
         env:
           RELEASE_VERSION: ${{ needs.pebble_build.outputs.release_version }}
         run: |
-          PBW_PATH="$(find build -type f -name 'pebble-codex-usage.pbw' -print -quit)"
+          PBW_PATH="$(find build -type f -name 'pebble-release-input.pbw' -print -quit)"
           SOURCE_MAP_PATH="$(find build -type f -name 'pebble-js-app.js.map' -print -quit)"
           if [ -z "$PBW_PATH" ] || [ -z "$SOURCE_MAP_PATH" ]; then
             echo "Pebble build artifact is missing from the downloaded files:"
