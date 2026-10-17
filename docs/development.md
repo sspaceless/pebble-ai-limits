@@ -33,9 +33,9 @@ runs in GitHub Actions. `.github/workflows/ci.yml` orchestrates reusable
 change detection, check, Pebble-build, and release workflows. Pushes to `main`
 and pull requests always run checks. Changes to app source, build manifests,
 release packaging, or workflow files also build all seven Pebble platforms.
-Changes limited to
-Markdown, canonical assets, or previews skip the build and release. The
-workflow caches npm, Python packages, the Pebble build environment, and the
+Markdown-only changes still run checks but skip the Pebble build and release
+publication. Canonical asset and preview changes also skip both. The workflow
+caches npm, Python packages, the Pebble build environment, and the
 pinned SDK between runs.
 For qualifying pushes to `main`, a packaging job prepares the PBW, source map,
 and SHA-256 checksum; the following publish job uploads them to [GitHub
