@@ -10,7 +10,9 @@ var modules = {
   menus: require('./menus'),
   fields: require('./connection-fields'),
   validation: require('./connection-validation'),
-  validName: require('../validation/account-name')
+  validName: require('../validation/account-name'),
+  policy: require('../device-login-policy'),
+  copy: require('./copy-script-runtime')
 };
 
 /** Serialize only browser modules and public draft data into the WebView. */

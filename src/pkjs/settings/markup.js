@@ -34,4 +34,17 @@ function button(label, data, className) {
   );
 }
 
-module.exports = { escape: escape, button: button };
+/** Build a button around trusted HTML assembled from escaped fields and SVG. */
+function buttonHtml(content, data, className) {
+  return (
+    C.BUTTON_OPEN +
+    escape(className || '') +
+    C.BUTTON_ACTION_HANDLER +
+    escape(JSON.stringify(data)) +
+    C.BUTTON_ACTION_END +
+    content +
+    C.BUTTON_CLOSE
+  );
+}
+
+module.exports = { escape: escape, button: button, buttonHtml: buttonHtml };

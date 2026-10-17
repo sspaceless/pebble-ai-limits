@@ -10,7 +10,9 @@ module.exports = function (state, catalog, icons, modules) {
   var list = modules.list(state, catalog, icons);
   var order = list.order;
   var render = list.render;
-  var deviceLogin = modules.device(mark, render);
+  var deviceLogin = modules.device(mark, render, modules.policy());
+
+  modules.copy();
   var edit = modules.name(state, draft, order, mark, render, modules.validName);
   var openConnection = modules.connection(
     state,

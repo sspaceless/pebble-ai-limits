@@ -22,23 +22,6 @@ module.exports = function (account, catalog, deviceLogin) {
       deviceLogin.start(account);
     };
 
-    document.getElementById(C.ID_COPY_CODEX_CODE).onclick = function () {
-      var code = document.getElementById(C.ID_DEVICE_CODE);
-      var range = document.createRange();
-
-      range.selectNodeContents(code);
-      var selection = window.getSelection();
-
-      selection.removeAllRanges();
-      selection.addRange(range);
-
-      try {
-        document.execCommand(C.CLIPBOARD_COPY_COMMAND);
-      } catch (_) {
-        /* Ignore unavailable optional data; use the fallback below. */
-      }
-    };
-
     document.getElementById(C.ID_CONNECTION_ERROR).textContent = '';
     connectionEditor.scrollIntoView({ behavior: C.SCROLL_BEHAVIOR, block: C.SCROLL_ALIGNMENT });
 

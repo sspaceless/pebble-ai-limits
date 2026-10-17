@@ -57,14 +57,7 @@ function applySettings(draft, connectId) {
 
     mapped[a.id] = id;
 
-    return {
-      id: id,
-      provider: a.provider,
-      label: name,
-      config: config,
-      revision: config ? 1 : 0,
-      snapshot: null
-    };
+    return record.create(a.provider, id, name, config);
   });
 
   if (connectId && ids.indexOf(connectId) === -1) {
@@ -76,14 +69,13 @@ function applySettings(draft, connectId) {
   }
 
   if (!records.length) {
-    records.push({
-      id: C.DEFAULT_CODEX_ID_PREFIX + Date.now().toString(C.IDENTIFIER_RADIX),
-      provider: C.PROVIDER_CODEX,
-      label: C.DEFAULT_ACCOUNT_LABEL,
-      config: null,
-      revision: 0,
-      snapshot: null
-    });
+    records.push(
+      record.create(
+        C.PROVIDER_CODEX,
+        C.DEFAULT_CODEX_ID_PREFIX + Date.now().toString(C.IDENTIFIER_RADIX),
+        C.DEFAULT_ACCOUNT_LABEL
+      )
+    );
   }
 
   state.accounts = records;

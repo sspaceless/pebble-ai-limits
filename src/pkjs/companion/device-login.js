@@ -3,6 +3,7 @@ var direct = require('../providers/codex');
 var accounts = require('../accounts');
 var pages = require('../config');
 var messages = require('./watch-messages');
+var loginPolicy = require('../device-login-policy')();
 
 var statusFor = messages.statusFor;
 var errorStatus = messages.errorStatus;
@@ -113,7 +114,7 @@ module.exports = function (openPage, refresh) {
       return;
     }
 
-    if (pending.expiresAt <= Date.now()) {
+    if (loginPolicy.expired(pending.expiresAt, Date.now())) {
       cancelPending();
       statusFor(target.id, C.LOGIN_CODE_EXPIRED);
 

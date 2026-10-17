@@ -5,7 +5,7 @@ var C = require('../resources/settings/device-login');
  * and companion storage are unavailable inside the WebView.
  * Tokens are staged in the draft account; only Save and close commits them.
  */
-module.exports = function (mark, render) {
+module.exports = function (mark, render, policy) {
   var deviceGeneration = 0;
   var deviceTimer = null;
   var deviceRequest = null;
@@ -94,6 +94,8 @@ module.exports = function (mark, render) {
         C.MIN_POLL_INTERVAL_SECONDS,
         Math.min(C.MAX_POLL_INTERVAL_SECONDS, Number(data.interval) || C.MIN_POLL_INTERVAL_SECONDS)
       );
+      var expiresAt =
+        Date.now() + C.DEVICE_CODE_TTL_MINUTES * C.SECONDS_PER_MINUTE * C.MILLISECONDS_PER_SECOND;
 
       code.textContent = userCode;
       panel.hidden = false;
@@ -104,11 +106,23 @@ module.exports = function (mark, render) {
           return;
         }
 
+        if (policy.expired(expiresAt, Date.now())) {
+          status.textContent = C.SIGN_IN_FAILED_OR_EXPIRED_TRY_AGAIN;
+
+          return;
+        }
+
         postDevice(
           C.DEVICE_TOKEN_PATH,
           { device_auth_id: data.device_auth_id, user_code: userCode },
           function (failure, result) {
             if (generation !== deviceGeneration) {
+              return;
+            }
+
+            if (policy.expired(expiresAt, Date.now())) {
+              status.textContent = C.SIGN_IN_FAILED_OR_EXPIRED_TRY_AGAIN;
+
               return;
             }
 

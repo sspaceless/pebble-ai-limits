@@ -1,10 +1,11 @@
 var C = require('../resources/accounts/migration');
-var providers = require('../providers');
+var providers = require('../providers/catalog');
+var records = require('./record');
 
 function catalogOrder(state) {
   var rows = [];
 
-  providers.catalog.forEach(function (p) {
+  providers.entries.forEach(function (p) {
     state.accounts.forEach(function (a) {
       if (a.provider === p.id) {
         rows.push(a);
@@ -41,7 +42,7 @@ function migrate(previousState, read, write) {
     selectedId: null,
     accounts: []
   };
-  providers.catalog.forEach(function (p) {
+  providers.entries.forEach(function (p) {
     var old = read(
       p.id === C.PROVIDER_CODEX
         ? C.LEGACY_CODEX_KEY
@@ -49,14 +50,12 @@ function migrate(previousState, read, write) {
     );
 
     if (old && old.mode === C.CONNECTION_MODE_DIRECT) {
-      var a = {
-        id: p.id + C.DEFAULT_ACCOUNT_ID_SUFFIX,
-        provider: p.id,
-        label: C.DEFAULT_ACCOUNT_LABEL,
-        config: old,
-        revision: 1,
-        snapshot: null
-      };
+      var a = records.create(
+        p.id,
+        p.id + C.DEFAULT_ACCOUNT_ID_SUFFIX,
+        C.DEFAULT_ACCOUNT_LABEL,
+        old
+      );
 
       state.accounts.push(a);
 
@@ -67,14 +66,9 @@ function migrate(previousState, read, write) {
   });
 
   if (!state.accounts.length) {
-    state.accounts.push({
-      id: C.DEFAULT_CODEX_ID,
-      provider: C.PROVIDER_CODEX,
-      label: C.DEFAULT_ACCOUNT_LABEL,
-      config: null,
-      revision: 0,
-      snapshot: null
-    });
+    state.accounts.push(
+      records.create(C.PROVIDER_CODEX, C.DEFAULT_CODEX_ID, C.DEFAULT_ACCOUNT_LABEL)
+    );
   }
 
   if (!state.selectedId) {
@@ -85,7 +79,7 @@ function migrate(previousState, read, write) {
   write(state);
   localStorage.removeItem(C.LEGACY_CODEX_KEY);
   localStorage.removeItem(C.LEGACY_SELECTION_KEY);
-  providers.catalog.forEach(function (p) {
+  providers.entries.forEach(function (p) {
     if (p.id !== C.PROVIDER_CODEX) {
       localStorage.removeItem(C.LEGACY_PROVIDER_KEY_PREFIX + p.id + C.LEGACY_PROVIDER_KEY_SUFFIX);
     }

@@ -1,5 +1,5 @@
 var C = require('../resources/accounts/profiles');
-var providers = require('../providers');
+var providers = require('../providers/catalog');
 var store = require('./store');
 var queries = require('./queries');
 var select = require('./order').select;
@@ -61,14 +61,13 @@ function remove(id) {
   });
 
   if (!state.accounts.length) {
-    state.accounts.push({
-      id: C.DEFAULT_CODEX_ID_PREFIX + Date.now().toString(C.IDENTIFIER_RADIX),
-      provider: C.PROVIDER_CODEX,
-      label: C.DEFAULT_ACCOUNT_LABEL,
-      config: null,
-      revision: 0,
-      snapshot: null
-    });
+    state.accounts.push(
+      records.create(
+        C.PROVIDER_CODEX,
+        C.DEFAULT_CODEX_ID_PREFIX + Date.now().toString(C.IDENTIFIER_RADIX),
+        C.DEFAULT_ACCOUNT_LABEL
+      )
+    );
   }
 
   if (

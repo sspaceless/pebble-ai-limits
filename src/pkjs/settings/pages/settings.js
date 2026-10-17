@@ -7,6 +7,7 @@ var orderScript = require('../order-script');
 
 var escape = markup.escape;
 var button = markup.button;
+var buttonHtml = markup.buttonHtml;
 
 var providerIcon = providerIcons.providerIcon;
 
@@ -35,7 +36,7 @@ module.exports = function (state) {
         C.SPACE +
         escape(a.label) +
         C.DRAG_HANDLE_CLOSE +
-        button(
+        buttonHtml(
           C.ACCOUNT_TITLE_OPEN +
             providerIcon(a.provider) +
             title +

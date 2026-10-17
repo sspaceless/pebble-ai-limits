@@ -30,6 +30,19 @@ test('settings page closes its inline style before the visible body begins', () 
   assert.equal(scripts.length, 1);
   assert.doesNotThrow(() => new vm.Script(scripts[0][1]));
 });
+
+test('initial account buttons render trusted structure while escaping account labels', () => {
+  const html = pages.settings({
+    selectedId: 'a',
+    accounts: [{ id: 'a', provider: 'codex', label: '<Work>', configured: false }]
+  });
+
+  assert.ok(html.includes('class="account-select"'));
+  assert.ok(html.includes('<span class="account-title">'));
+  assert.ok(html.includes('&lt;Work&gt;'));
+  assert.ok(!html.includes('&lt;span class="account-title"'));
+  assert.ok(html.includes('<svg'));
+});
 test('selecting an account does not navigate out of the settings page', () => {
   const html = pages.settings({
     selectedId: 'a',
