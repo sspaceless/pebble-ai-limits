@@ -19,15 +19,15 @@ preview/
 
 | SDK platform | Watch type | Available previews |
 | --- | --- | --- |
-| `aplite` | Classic / Steel | [Claude and Gemini screenshots](watches/aplite/) |
-| `basalt` | Time / Time Steel | [Claude and Gemini screenshots](watches/basalt/) |
-| `chalk` | Time Round | [Claude and Gemini screenshots](watches/chalk/) |
-| `diorite` | Pebble 2 | [Claude screenshot](watches/diorite/claude.png) |
-| `emery` | Time 2 | [Claude screenshot](watches/emery/claude.png) |
-| `flint` | Pebble 2 Duo | [Claude screenshot](watches/flint/claude.png) |
-| `gabbro` | Round 2 | [Claude screenshot](watches/gabbro/claude.png) |
+| `aplite` | Classic / Steel | [All six provider previews](watches/aplite/) |
+| `basalt` | Time / Time Steel | [All six provider previews](watches/basalt/) |
+| `chalk` | Time Round | [All six provider previews](watches/chalk/) |
+| `diorite` | Pebble 2 | [All six provider previews](watches/diorite/) |
+| `emery` | Time 2 | [All six provider previews](watches/emery/) |
+| `flint` | Pebble 2 Duo | [All six provider previews](watches/flint/) |
+| `gabbro` | Round 2 | [All six provider previews](watches/gabbro/) |
 
-The watch screenshots use the matching SDK emulator and demonstration Claude quota data; no provider authentication was performed. The retained captures show the current Claude/Gemini marks. Old Codex marks, letter-placeholder provider marks, legacy screens, diagnostic images, and animations containing old artwork have been removed. Current Codex, API-cap and animation captures still need to be produced.
+Each platform directory contains `codex.png`, `claude.png`, `gemini.png`, `claude-api.png`, `gemini-api.png`, and `custom.png`, captured from that platform's SDK emulator. All use demonstration data; API caps do not show reset timers, and no provider authentication was performed. The captures show the current provider marks. Old letter-placeholder provider marks, legacy screens, diagnostic images, and animations containing old artwork have been removed. Current progress and sync animation captures still need to be produced.
 
 For new platforms, add their first real screenshot under `watches/<SDK platform>/`. Choose the actual emulator/device platform; matching screen dimensions alone is not enough to assign a platform. Use provider names such as `codex.png` and `claude.png`, with descriptive names for interactions and animations.
 

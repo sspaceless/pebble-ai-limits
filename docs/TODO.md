@@ -38,5 +38,5 @@
 - [x] Document development checks and build instructions in the README.
 - [ ] Add an embedded project preview to the GitHub README.
 - [ ] Update the phone-preview generator to capture the main settings page's inline account-creation, rename, connection, and device-login flows, then regenerate the screenshots.
-- [ ] Capture current Codex and API-cap screens and animations. Claude previews cover all seven SDK platforms; Gemini previews cover `aplite`, `basalt`, and `chalk`.
+- [ ] Capture current progress and sync animations. All six provider screens are captured on all seven SDK platforms; see [`preview/README.md`](../preview/README.md).
 - [x] Remove obsolete preview assets and old icon studies; regenerate phone previews and fix stale paths in `assets/BRANDS.md`.
