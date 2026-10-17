@@ -1,7 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-const { normalizeUsage, tokens } = createRequire(import.meta.url)('../src/pkjs/direct.js');
+
+const { normalizeUsage, tokens } = createRequire(import.meta.url)('../src/pkjs/providers/codex.js');
+
 test('direct API unavailable quota is preserved and unexpected payloads are rejected', () => {
   assert.throws(() => normalizeUsage({}));
   assert.equal(normalizeUsage({ rate_limit: null }).primary.left, -1);
@@ -11,6 +13,7 @@ test('direct API unavailable quota is preserved and unexpected payloads are reje
       secondary_window: { used_percent: 120, limit_window_seconds: 604800, reset_at: 2000000000 }
     }
   });
+
   assert.equal(data.primary.left, -1);
   assert.equal(data.primary.resetsAt, 0);
   assert.equal(data.secondary.left, 0);

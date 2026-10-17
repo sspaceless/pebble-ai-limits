@@ -1,0 +1,28 @@
+/** Canonical http values. */
+module.exports = {
+  HTTP_BAD_REQUEST: 400,
+  HTTP_SERVER_ERROR: 500,
+  HTTP_RATE_LIMITED: 429,
+  HTTP_UNAUTHORIZED: 401,
+  HTTP_FORBIDDEN: 403,
+  HTTP_OK: 200,
+  HTTP_REDIRECT_START: 300,
+  HTTP_NOT_FOUND: 404,
+  HTTP_GET: 'GET',
+  CONTENT_TYPE_JSON: 'application/json',
+  BEARER_PREFIX: 'Bearer ',
+  HTTP_POST: 'POST',
+  CONTENT_TYPE_FORM: 'application/x-www-form-urlencoded',
+  HTTPS_SCHEME: 'https://',
+  HEADER_CONTENT_TYPE: 'Content-Type',
+  BEARER_TOKEN_OPTIONAL: 'Bearer token (optional)',
+  HTTPS_ENDPOINT: 'HTTPS endpoint',
+  HTTPS_AUTH_OPENAI_COM_DEVICEAUTH_CALLBACK: 'https://auth.openai.com/deviceauth/callback',
+  LOGIN_REQUEST_GROUP: 'login',
+  USAGE_REQUEST_GROUP: 'usage',
+  CONNECTION_MODE_DIRECT: 'direct',
+  ANTHROPIC_API_VERSION: '2023-06-01',
+  CLAUDE_OAUTH_BETA_VERSION: 'oauth-2025-04-20',
+  SUBSCRIPTION_REQUIRED_REASON: 'SUBSCRIPTION_REQUIRED',
+  TEXT_PLAIN: 'text/plain'
+};

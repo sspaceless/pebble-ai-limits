@@ -22,37 +22,46 @@ const usage = {
     secondary_window: null
   }
 };
+
 function profiles(p) {
   return JSON.parse(p.storage.get('ai-profiles-v2')).accounts;
 }
+
 function profile(p, provider, label) {
   return profiles(p).find((a) => a.provider === provider && (!label || a.label === label));
 }
+
 function current(p) {
-  var state = JSON.parse(p.storage.get('ai-profiles-v2'));
+  const state = JSON.parse(p.storage.get('ai-profiles-v2'));
+
   return state.accounts.find((a) => a.id === state.selectedId);
 }
+
 function phone(config, pending, delayAcks = false) {
-  const events = {},
-    messages = [],
-    requests = [],
-    pages = [],
-    acks = [],
-    timers = new Map(),
-    storage = new Map();
+  const events = {};
+  const messages = [];
+  const requests = [];
+  const pages = [];
+  const acks = [];
+  const timers = new Map();
+  const storage = new Map();
   let timerId = 0;
   const clock = { ms: Date.now() };
+
   class ClockDate extends Date {
     static now() {
       return clock.ms;
     }
   }
+
   if (config) {
     storage.set('codex-connection-v2', JSON.stringify(config));
   }
+
   if (pending) {
     storage.set('codex-device-login-v1', JSON.stringify(pending));
   }
+
   const context = {
     localStorage: {
       getItem: (key) => storage.get(key) || null,
@@ -65,6 +74,7 @@ function phone(config, pending, delayAcks = false) {
       },
       sendAppMessage: (data, ack) => {
         messages.push(data);
+
         if (delayAcks) {
           acks.push(ack);
         } else {
@@ -80,15 +90,18 @@ function phone(config, pending, delayAcks = false) {
         this.method = method;
         this.url = url;
       };
+
       this.setRequestHeader = (key, value) => {
         this.headers[key] = value;
       };
+
       this.send = (body) => {
         this.body = body;
       };
     },
     setTimeout: (fn) => {
       timers.set(++timerId, fn);
+
       return timerId;
     },
     clearTimeout: (id) => timers.delete(id),
@@ -96,24 +109,32 @@ function phone(config, pending, delayAcks = false) {
     decodeURIComponent,
     Date: ClockDate
   };
-  const cache = {};
-  context.require = (name) => {
-    if (!cache[name]) {
+  const cache = new Map();
+
+  // Resolve from each importing file, matching CommonJS for nested companion modules.
+  function loadModule(url) {
+    const key = url.href;
+
+    if (!cache.has(key)) {
       const module = { exports: {} };
+
+      cache.set(key, module);
+      const require = (name) => loadModule(new URL(name + '.js', url));
+
       vm.runInNewContext(
-        readFileSync(new URL('../src/pkjs/' + name.slice(2) + '.js', import.meta.url), 'utf8'),
-        { ...context, module, exports: module.exports }
+        readFileSync(url, 'utf8'),
+        { ...context, require, module, exports: module.exports },
+        { filename: url.pathname }
       );
-      cache[name] = module.exports;
     }
-    return cache[name];
-  };
-  vm.runInNewContext(
-    readFileSync(new URL('../src/pkjs/index.js', import.meta.url), 'utf8'),
-    context
-  );
+
+    return cache.get(key).exports;
+  }
+
+  loadModule(new URL('../src/pkjs/index.js', import.meta.url));
   const reply = (index, status, data) => {
     const xhr = requests[index];
+
     xhr.status = status;
     xhr.responseText = JSON.stringify(data);
     xhr.onload();
@@ -124,16 +145,20 @@ function phone(config, pending, delayAcks = false) {
         JSON.stringify(typeof value === 'string' ? { action: value } : value)
       )
     });
+
   return { events, messages, requests, storage, pages, timers, reply, action, acks, clock };
 }
+
 test('unconfigured phone asks for settings without network requests', () => {
   const p = phone();
+
   p.events.ready();
   assert.equal(p.messages[0].STATUS, 'Open app settings');
   assert.equal(p.requests.length, 0);
 });
 test('watch keeps the provider name and reports the account count', () => {
   const p = phone(directConfig);
+
   p.events.ready();
   assert.equal(p.messages.at(-1).PROVIDER_NAME, 'Codex');
   assert.equal(p.messages.at(-1).ACCOUNT_COUNT, 1);
@@ -144,6 +169,7 @@ test('watch keeps the provider name and reports the account count', () => {
 });
 test('direct mode uses only the OpenAI usage endpoint and delivers snake-case quotas', () => {
   const p = phone(directConfig);
+
   p.events.ready();
   p.events.appmessage();
   assert.equal(p.requests.length, 1);
@@ -157,11 +183,13 @@ test('direct mode uses only the OpenAI usage endpoint and delivers snake-case qu
 });
 test('401 refreshes once, persists rotated tokens, and retries with the new token', () => {
   const p = phone(directConfig);
+
   p.events.ready();
   p.reply(0, 401, {});
   assert.equal(p.requests[1].url, 'https://auth.openai.com/oauth/token');
   assert.equal(JSON.parse(p.requests[1].body).refresh_token, 'old-refresh');
   const next = makeJwt({ exp: 2000000000 });
+
   p.reply(1, 200, { access_token: next, refresh_token: 'rotated-refresh' });
   assert.equal(profile(p, 'codex').config.refreshToken, 'rotated-refresh');
   assert.equal(p.requests[2].headers.Authorization, 'Bearer ' + next);
@@ -171,6 +199,7 @@ test('401 refreshes once, persists rotated tokens, and retries with the new toke
 });
 test('expired credentials refresh before requesting usage', () => {
   const p = phone({ ...directConfig, expiresAt: 1 });
+
   p.events.ready();
   assert.equal(p.requests[0].url, 'https://auth.openai.com/oauth/token');
   p.requests[0].ontimeout();
@@ -179,6 +208,7 @@ test('expired credentials refresh before requesting usage', () => {
 });
 test('device login requests a code, exchanges approval, then reads usage', () => {
   const p = phone();
+
   p.action('login');
   assert.equal(p.requests[0].url, 'https://auth.openai.com/api/accounts/deviceauth/usercode');
   p.reply(0, 200, { device_auth_id: 'device-id', user_code: 'ABCD-EFGH', interval: '5' });
@@ -190,6 +220,7 @@ test('device login requests a code, exchanges approval, then reads usage', () =>
   });
   p.reply(1, 200, { authorization_code: 'one-time-code', code_verifier: 'verifier' });
   const form = new URLSearchParams(p.requests[2].body);
+
   assert.equal(form.get('grant_type'), 'authorization_code');
   assert.equal(form.get('redirect_uri'), 'https://auth.openai.com/deviceauth/callback');
   p.reply(2, 200, { access_token: authToken, refresh_token: 'phone-refresh', expires_in: 3600 });
@@ -205,12 +236,14 @@ test('pending login resumes after restart and waits between approval polls', () 
     interval: 5,
     expiresAt: Date.now() + 60000
   });
+
   p.events.ready();
   p.reply(0, 403, {});
   assert.equal(p.timers.size, 1);
   p.events.appmessage();
   assert.equal(p.requests.length, 1);
   const [id, fn] = p.timers.entries().next().value;
+
   p.timers.delete(id);
   fn();
   assert.equal(p.requests.length, 2);
@@ -222,12 +255,14 @@ test('pending login resumes after restart and waits between approval polls', () 
 });
 test('expired device codes stop polling', () => {
   const p = phone(null, { deviceAuthId: 'id', userCode: 'code', interval: 5, expiresAt: 1 });
+
   p.events.ready();
   assert.equal(p.requests.length, 0);
   assert.equal(p.messages[0].STATUS, 'Login code expired');
 });
 test('logout prevents in-flight usage from updating the watch and removes phone credentials', () => {
   const p = phone(directConfig);
+
   p.events.ready();
   p.action('logout');
   p.reply(0, 200, usage);
@@ -243,12 +278,14 @@ test('logout prevents in-flight usage from updating the watch and removes phone 
 });
 test('configuration contains no access or refresh tokens', () => {
   const p = phone(directConfig);
+
   p.events.showConfiguration();
   assert.equal(decodeURIComponent(p.pages[0]).includes(authToken), false);
   assert.equal(decodeURIComponent(p.pages[0]).includes('old-refresh'), false);
   const html = decodeURIComponent(p.pages[0].split(',')[1]);
+
   for (const script of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) {
-    new vm.Script(script[1]);
+    assert.doesNotThrow(() => new vm.Script(script[1]));
   }
 });
 test('device-code page escapes server-provided HTML and contains valid JavaScript', () => {
@@ -258,21 +295,26 @@ test('device-code page escapes server-provided HTML and contains valid JavaScrip
     interval: 5,
     expiresAt: Date.now() + 60000
   });
+
   p.events.showConfiguration();
   const html = decodeURIComponent(p.pages[0].split(',')[1]);
+
   assert.equal(html.includes('<script>alert(1)</script>'), false);
+
   for (const script of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) {
-    new vm.Script(script[1]);
+    assert.doesNotThrow(() => new vm.Script(script[1]));
   }
 });
 test('cancelled configuration does not fetch or overwrite settings', () => {
   const p = phone();
+
   p.events.webviewclosed({ response: 'CANCELLED' });
   assert.equal(p.requests.length, 0);
 });
 
 test('switching provider ignores old responses and sends the correct credentials and header', () => {
   const p = phone(directConfig);
+
   p.events.ready();
   p.action({ action: 'saveProvider', provider: 'claude', credentials: 'claude-access' });
   assert.equal(p.requests[1].url, 'https://api.anthropic.com/api/oauth/usage');
@@ -294,6 +336,7 @@ test('switching provider ignores old responses and sends the correct credentials
 });
 test('API provider selects configured model caps without calling model generation', () => {
   const p = phone();
+
   p.action({
     action: 'saveProvider',
     provider: 'claude-api',
@@ -319,6 +362,7 @@ test('API provider selects configured model caps without calling model generatio
 });
 test('Google quota pagination aggregates pages before model selection', () => {
   const p = phone();
+
   p.action({
     action: 'saveProvider',
     provider: 'gemini-api',
@@ -347,20 +391,24 @@ test('Google quota pagination aggregates pages before model selection', () => {
 });
 test('non-Codex setup pages contain no saved credentials and all scripts compile', () => {
   const p = phone(directConfig);
+
   p.action({ action: 'selectProvider', provider: 'gemini' });
   p.action('login');
   assert.equal(p.requests.length, 0);
   assert.ok(decodeURIComponent(p.pages.at(-1)).includes('Code Assist project ID'));
   assert.equal(decodeURIComponent(p.pages.at(-1)).includes(authToken), false);
+
   for (const page of p.pages) {
     const html = decodeURIComponent(page.split(',')[1]);
+
     for (const script of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) {
-      new vm.Script(script[1]);
+      assert.doesNotThrow(() => new vm.Script(script[1]));
     }
   }
 });
 test('Gemini discovers its Code Assist project and explains subscription-required errors', () => {
   const p = phone();
+
   p.action({ action: 'saveProvider', provider: 'gemini', credentials: 'google-access' });
   assert.ok(p.requests[0].url.endsWith(':loadCodeAssist'));
   p.reply(0, 200, { cloudaicompanionProject: 'project-id' });
@@ -371,6 +419,7 @@ test('Gemini discovers its Code Assist project and explains subscription-require
 });
 test('Gemini token renewal uses Google OAuth and retains provider metadata', () => {
   const p = phone();
+
   p.action({
     action: 'saveProvider',
     provider: 'gemini',
@@ -380,18 +429,21 @@ test('Gemini token renewal uses Google OAuth and retains provider metadata', () 
   });
   assert.equal(p.requests[0].url, 'https://oauth2.googleapis.com/token');
   const body = new URLSearchParams(p.requests[0].body);
+
   assert.equal(body.get('grant_type'), 'refresh_token');
   assert.equal(body.get('refresh_token'), 'google-refresh');
   p.reply(0, 200, { access_token: 'renewed-google', expires_in: 3600 });
   assert.equal(p.requests[1].headers.Authorization, 'Bearer renewed-google');
   p.reply(1, 200, { buckets: [{ modelId: 'gemini-pro', remainingFraction: 0.5 }] });
   const saved = profile(p, 'gemini').config;
+
   assert.equal(saved.model, 'gemini-pro');
   assert.equal(saved.project, 'project-id');
   assert.equal(saved.refreshToken, 'google-refresh');
 });
 test('migration preserves all legacy providers and the selected provider', () => {
   const p = phone(directConfig);
+
   p.storage.set(
     'ai-account-claude-v1',
     JSON.stringify({ mode: 'direct', accessToken: 'legacy-claude' })
@@ -408,8 +460,10 @@ test('migration preserves all legacy providers and the selected provider', () =>
 });
 test('two accounts of one provider have separate credentials, cached quotas and watch identities', () => {
   const p = phone(directConfig);
+
   p.action({ action: 'createAccount', provider: 'claude', label: 'Personal' });
   const personal = current(p);
+
   p.action({
     action: 'saveProvider',
     provider: 'claude',
@@ -418,6 +472,7 @@ test('two accounts of one provider have separate credentials, cached quotas and 
   });
   p.action({ action: 'createAccount', provider: 'claude', label: 'Work' });
   const work = current(p);
+
   p.action({
     action: 'saveProvider',
     provider: 'claude',
@@ -444,8 +499,10 @@ test('two accounts of one provider have separate credentials, cached quotas and 
 });
 test('renaming during a request preserves credentials and updates the displayed account name', () => {
   const p = phone(directConfig);
+
   p.events.ready();
   const id = current(p).id;
+
   p.action({ action: 'saveName', accountId: id, label: 'Office' });
   assert.equal(profile(p, 'codex').config.accessToken, authToken);
   p.reply(0, 200, usage);
@@ -455,11 +512,14 @@ test('renaming during a request preserves credentials and updates the displayed 
 });
 test('refresh token rotation is saved to the original account after switching away', () => {
   const p = phone(directConfig);
+
   p.events.ready();
   const original = current(p).id;
+
   p.reply(0, 401, {});
   p.action({ action: 'createAccount', provider: 'claude', label: 'Work' });
   const work = current(p).id;
+
   p.action({
     action: 'saveProvider',
     provider: 'claude',
@@ -467,6 +527,7 @@ test('refresh token rotation is saved to the original account after switching aw
     credentials: 'work-token'
   });
   const renewed = makeJwt({ exp: 2000000000 });
+
   p.reply(1, 200, { access_token: renewed, refresh_token: 'rotated-personal' });
   assert.equal(profile(p, 'codex').config.refreshToken, 'rotated-personal');
   assert.equal(current(p).id, work);
@@ -481,8 +542,10 @@ test('refresh token rotation is saved to the original account after switching aw
 });
 test('deleting an account during renewal cannot restore it or affect another account', () => {
   const p = phone(directConfig);
+
   p.events.ready();
   const id = current(p).id;
+
   p.reply(0, 401, {});
   p.action({ action: 'deleteAccount', accountId: id });
   p.reply(1, 200, { access_token: authToken, refresh_token: 'late-refresh' });
@@ -502,10 +565,13 @@ test('deleting an account during renewal cannot restore it or affect another acc
 });
 test('Codex device login remains bound to its account while another account is selected', () => {
   const p = phone(directConfig);
+
   p.events.ready();
   const personal = current(p).id;
+
   p.action({ action: 'createAccount', provider: 'codex', label: 'Work' });
   const work = current(p).id;
+
   p.reply(1, 200, { device_auth_id: 'device-work', user_code: 'WORK-CODE', interval: '5' });
   assert.equal(JSON.parse(p.storage.get('codex-device-login-v1')).profileId, work);
   p.action('finishLogin');
@@ -515,6 +581,7 @@ test('Codex device login remains bound to its account while another account is s
     exp: 2000000000,
     'https://api.openai.com/auth': { chatgpt_account_id: 'backend-work' }
   });
+
   p.reply(3, 200, { access_token: workToken, refresh_token: 'work-refresh' });
   assert.equal(current(p).id, personal);
   assert.equal(profile(p, 'codex', 'Personal').config.accessToken, authToken);
@@ -526,24 +593,31 @@ test('Codex device login remains bound to its account while another account is s
 });
 test('account setup and rename pages escape names, keep credentials out, and compile scripts', () => {
   const p = phone(directConfig);
+
   p.events.ready();
   const id = current(p).id;
+
   p.action({ action: 'saveName', accountId: id, label: '<img src=x>' });
   p.action({ action: 'renameAccount', accountId: id });
   p.action({ action: 'addAccount', provider: 'gemini' });
+
   for (const page of p.pages) {
     const html = decodeURIComponent(page.split(',')[1]);
+
     assert.equal(html.includes(authToken), false);
     assert.equal(html.includes('<img src=x>'), false);
+
     for (const script of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) {
-      new vm.Script(script[1]);
+      assert.doesNotThrow(() => new vm.Script(script[1]));
     }
   }
 });
 test('new credentials for an account ignore late responses from its previous credentials', () => {
   const p = phone();
+
   p.action({ action: 'saveProvider', provider: 'claude', credentials: 'old-token' });
   const id = current(p).id;
+
   p.action({ action: 'saveProvider', provider: 'claude', accountId: id, credentials: 'new-token' });
   assert.equal(p.requests.length, 2);
   assert.equal(p.messages.at(-1).ACCOUNT_REV, 2);
@@ -563,6 +637,7 @@ test('migration binds an old pending Codex login without changing a different se
     interval: 5,
     expiresAt: Date.now() + 60000
   });
+
   p.storage.set(
     'ai-account-claude-v1',
     JSON.stringify({ mode: 'direct', accessToken: 'claude-token' })
@@ -578,10 +653,13 @@ test('migration binds an old pending Codex login without changing a different se
 });
 test('slow watch delivery coalesces rapid switches to the latest selected account', () => {
   const p = phone(directConfig, null, true);
+
   p.events.ready();
   const personal = current(p).id;
+
   p.action({ action: 'createAccount', provider: 'claude', label: 'Work' });
   const work = current(p).id;
+
   p.action({
     action: 'saveProvider',
     provider: 'claude',
@@ -606,13 +684,16 @@ test('slow watch delivery coalesces rapid switches to the latest selected accoun
 });
 test('reported plan names stay with their own account when switching profiles', () => {
   const p = phone(directConfig);
+
   p.events.ready();
   const personal = current(p).id;
+
   p.reply(0, 200, { ...usage, plan_type: 'plus' });
   assert.equal(p.messages.at(-1).PROVIDER_NAME, 'Codex Plus');
   assert.equal(profile(p, 'codex').config.plan, 'Plus');
   p.action({ action: 'createAccount', provider: 'claude', label: 'Work' });
   const work = current(p).id;
+
   p.action({
     action: 'saveProvider',
     provider: 'claude',
@@ -628,10 +709,13 @@ test('reported plan names stay with their own account when switching profiles', 
 });
 test('saved order controls navigation across providers without changing credentials', () => {
   const p = phone(directConfig);
+
   p.events.ready();
   const codex = current(p).id;
+
   p.action({ action: 'saveProvider', provider: 'claude', credentials: 'claude-token' });
   const claude = current(p).id;
+
   p.action({
     action: 'saveProvider',
     provider: 'custom',
@@ -640,6 +724,7 @@ test('saved order controls navigation across providers without changing credenti
     name: 'Other'
   });
   const custom = current(p).id;
+
   p.action({ action: 'reorderAccounts', accountIds: [claude, custom, codex] });
   assert.deepEqual(
     profiles(p).map((a) => a.id),
@@ -650,6 +735,7 @@ test('saved order controls navigation across providers without changing credenti
   p.events.appmessage({ payload: { NAV: 1 } });
   assert.equal(current(p).id, codex);
   const order = profiles(p).map((a) => a.id);
+
   p.action({ action: 'reorderAccounts', accountIds: [codex, codex, custom] });
   assert.deepEqual(
     profiles(p).map((a) => a.id),
@@ -658,10 +744,13 @@ test('saved order controls navigation across providers without changing credenti
 });
 test('one settings save commits edits together and preserves renewed credentials', () => {
   const p = phone(directConfig);
+
   p.events.ready();
   const codex = current(p).id;
+
   p.reply(0, 401, {});
   const renewed = makeJwt({ exp: 2000000000 });
+
   p.reply(1, 200, { access_token: renewed, refresh_token: 'renewed-refresh' });
   p.action({
     action: 'saveSettings',
@@ -680,6 +769,7 @@ test('one settings save commits edits together and preserves renewed credentials
   assert.equal(profile(p, 'claude').label, 'Work');
   assert.ok(!profile(p, 'claude').id.startsWith('draft-'));
   const before = p.storage.get('ai-profiles-v2');
+
   p.action({
     action: 'saveSettings',
     state: { selectedId: codex, accounts: [{ id: codex, provider: 'gemini', label: 'Invalid' }] }

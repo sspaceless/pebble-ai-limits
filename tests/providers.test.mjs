@@ -1,12 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+
 const providers = createRequire(import.meta.url)('../src/pkjs/providers.js');
+
 test('Claude subscription percentages and ISO/Unix reset timestamps', () => {
   const d = providers.claudeUsage({
     five_hour: { utilization: 25, resets_at: '2030-01-01T00:00:00Z' },
     seven_day: null
   });
+
   assert.equal(d.primary.left, 75);
   assert.equal(d.primary.resetsAt, 1893456000);
   assert.equal(d.secondary.left, -1);
@@ -30,12 +33,14 @@ test('Gemini quotas select explicit models and the most restrictive shared bucke
     },
     { model: 'gemini-pro', secondaryModel: 'gemini-flash' }
   );
+
   assert.equal(d.primary.left, 30);
   assert.equal(d.secondary.left, 100);
   const missing = providers.geminiUsage(
     { buckets: [{ modelId: 'gemini-pro', remainingFraction: null }] },
     { model: 'gemini-pro', secondaryModel: 'absent' }
   );
+
   assert.equal(missing.primary.left, -1);
   assert.equal(missing.secondary.left, -1);
 });
@@ -54,6 +59,7 @@ test('Claude API displays configured caps, never fabricated remaining percentage
     },
     { model: 'model' }
   );
+
   assert.equal(d.primary.value, '4K');
   assert.equal(d.secondary.value, '10M');
   assert.equal(d.primary.left, -1);
@@ -85,6 +91,7 @@ test('Google API effective caps respect model overrides, units and ambiguous dim
     ]
   };
   const d = providers.geminiCaps(p, { quotaMetric: 'quota/requests', model: 'test' });
+
   assert.equal(d.primary.value, '30');
   assert.equal(d.secondary.value, '1K');
   assert.equal(d.primary.left, -1);
@@ -101,6 +108,7 @@ test('imported credentials support Claude and Google formats without requiring a
       claudeAiOauth: { accessToken: 'access', refreshToken: 'refresh', expiresAt: 2000000000000 }
     })
   });
+
   assert.equal(c.expiresAt, 2000000000);
   assert.equal(c.refreshToken, 'refresh');
   const g = providers.parseConfig('gemini-api', {
@@ -113,6 +121,7 @@ test('imported credentials support Claude and Google formats without requiring a
     model: 'model',
     quotaMetric: 'metric'
   });
+
   assert.equal(g.expiresAt, 1);
   assert.equal(g.clientId, 'client');
   assert.throws(() =>
@@ -134,6 +143,7 @@ test('custom endpoint validation and snapshots preserve source freshness', () =>
     secondary: { left: -1, resetsAt: 0 },
     updatedAt: 100
   });
+
   assert.equal(d.updatedAt, 100);
   assert.equal(d.secondary.left, -1);
   assert.throws(() =>

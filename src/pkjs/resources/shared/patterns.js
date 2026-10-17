@@ -1,0 +1,25 @@
+/** Named validation and encoding patterns; flags are serialized explicitly. */
+module.exports = {
+  REGEX_GLOBAL: 'g',
+  REGEX_IGNORE_CASE: 'i',
+  BASE64URL_HYPHEN_PATTERN: '-',
+  BASE64URL_UNDERSCORE_PATTERN: '_',
+  UNKNOWN_PLAN_PATTERN: '^(unknown|none|null)$',
+  GOOGLE_PLAN_PREFIX_PATTERN: '^Google AI ',
+  GEMINI_PLAN_PREFIX_PATTERN: '^Gemini Code Assist ',
+  PLAN_NAME_PATTERN: '^[A-Za-z0-9][A-Za-z0-9 .+_()-]{0,47}$',
+  HTTPS_ENDPOINT_PATTERN: '^https:\\/\\/[a-zA-Z0-9.-]+(?::\\d{1,5})?(?:\\/[^\\s?#]*)?$',
+  WHITESPACE_PATTERN: '\\s',
+  CODE_ASSIST_PROJECT_PATTERN: '^[a-zA-Z0-9:_-]+$',
+  PROJECT_NUMBER_PATTERN: '^\\d+$',
+  AI_STUDIO_KEY_PATTERN: '^AIza',
+  REQUEST_METRIC_PATTERN: 'request',
+  REQUEST_QUOTA_UNIT_PATTERN: '^1\\/(?:min|d)(?:\\/|$)',
+  QUOTA_CAP_PATTERN: '^(-1|\\d+)$',
+  GEMINI_MODEL_PREFIX_PATTERN: '^gemini-',
+  HTML_AMPERSAND_PATTERN: '&',
+  HTML_LESS_THAN_PATTERN: '<',
+  HTML_GREATER_THAN_PATTERN: '>',
+  HTML_QUOTE_PATTERN: '"',
+  ACCOUNT_CONTROL_CHARACTER_PATTERN: '[\\x00-\\x1f\\x7f]'
+};

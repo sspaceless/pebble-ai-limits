@@ -1,0 +1,18 @@
+/** Canonical quota values. */
+module.exports = {
+  CLAUDE_SESSION_FIELD: 'five_hour',
+  CLAUDE_WEEK_FIELD: 'seven_day',
+  CODEX_RATE_LIMIT_FIELD: 'rate_limit',
+  QUOTA_PERIOD_MINUTE: 'minute',
+  QUOTA_PERIOD_DAY: 'day',
+  MODEL_DIMENSION: 'model',
+  REGION_DIMENSION: 'region',
+  GLOBAL_REGION: 'global',
+  DISCOVERY_HEALTH_CHECK_MODE: 'HEALTH_CHECK',
+  DISCOVERY_IDE: 'IDE_UNSPECIFIED',
+  DISCOVERY_PLATFORM: 'PLATFORM_UNSPECIFIED',
+  DISCOVERY_PLUGIN: 'GEMINI',
+  QUOTA_USER_DIMENSION: '{user}',
+  QUOTA_MINUTE_UNIT: '/min',
+  QUOTA_DAY_UNIT: '/d'
+};

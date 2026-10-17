@@ -1,0 +1,35 @@
+/** Explicit constant dependencies; these alone accompany the browser factory. */
+var dom = require('../shared/dom');
+var events = require('../shared/events');
+var storage = require('../shared/storage');
+var text = require('../shared/text');
+var limits = require('../shared/limits');
+var syntax = require('../shared/syntax');
+var providers = require('../shared/providers');
+
+module.exports = {
+  ID_PROVIDER_TYPE: dom.ID_PROVIDER_TYPE,
+  ID_ADD_NAME: dom.ID_ADD_NAME,
+  ID_ADD_ERROR: dom.ID_ADD_ERROR,
+  ID_PROVIDER_TOGGLE: dom.ID_PROVIDER_TOGGLE,
+  ID_PROVIDER_OPTIONS: dom.ID_PROVIDER_OPTIONS,
+  ID_PROVIDER_DROPDOWN: dom.ID_PROVIDER_DROPDOWN,
+  ATTRIBUTE_ARIA_EXPANDED: dom.ATTRIBUTE_ARIA_EXPANDED,
+  SELECTOR_PROVIDER_OPTION: dom.SELECTOR_PROVIDER_OPTION,
+  ATTRIBUTE_DATA_PROVIDER: dom.ATTRIBUTE_DATA_PROVIDER,
+  ID_PROVIDER_CHOICE: dom.ID_PROVIDER_CHOICE,
+  ATTRIBUTE_ARIA_SELECTED: dom.ATTRIBUTE_ARIA_SELECTED,
+  FALSE_ATTRIBUTE_VALUE: dom.FALSE_ATTRIBUTE_VALUE,
+  EVENT_CLICK: events.EVENT_CLICK,
+  EVENT_KEYDOWN: storage.EVENT_KEYDOWN,
+  EVENT_ESCAPE: events.EVENT_ESCAPE,
+  EVENT_INPUT: events.EVENT_INPUT,
+  ID_ADD_ACCOUNT_FORM: dom.ID_ADD_ACCOUNT_FORM,
+  CHOOSE_A_CONNECTION_TYPE: text.CHOOSE_A_CONNECTION_TYPE,
+  ENTER_AN_ACCOUNT_NAME_OF_1_16_CHARACTERS: text.ENTER_AN_ACCOUNT_NAME_OF_1_16_CHARACTERS,
+  DRAFT_ACCOUNT_PREFIX: storage.DRAFT_ACCOUNT_PREFIX,
+  IDENTIFIER_RADIX: limits.IDENTIFIER_RADIX,
+  HYPHEN: syntax.HYPHEN,
+  SELECTOR_ADD_ACCOUNT: dom.SELECTOR_ADD_ACCOUNT,
+  PROVIDER_CODEX: providers.PROVIDER_CODEX
+};
