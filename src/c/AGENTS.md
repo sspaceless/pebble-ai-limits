@@ -4,4 +4,5 @@
 - Preserve timer and layer ownership: cancel/invalidate callbacks and deinitialize animations before destroying their layer.
 - Treat `Snapshot` field order and sizes as persisted-cache layout. Before changing them, assess compatibility and migration needs.
 - Use `quota_display_percent()` for displayed percentage semantics so quota rendering and bar animation stay aligned.
+- When watch display, navigation, persistence, or timing changes, update the affected user guidance in `README.md` or `docs/providers.md` and the design contract in `docs/architecture.md` when applicable.
 - After C changes, run `npm run check` and `.venv/bin/pebble build`; the SDK build compiles all seven configured platforms.
