@@ -114,10 +114,25 @@ Tokens are stored in the companion's `localStorage`, not on the watch or in conf
 
 ## Building and testing
 
-Requires Node.js 20+, Python 3.13, `pebble-tool`, and the current Pebble SDK. The local `.venv` is prepared on this computer.
+Requires Node.js 20.19+, 22.13+, or 24+, Python 3.13, `pebble-tool`, and the current Pebble SDK. The local `.venv` is prepared on this computer.
+
+Install the pinned development tools before running checks:
 
 ```sh
-npm test
+npm ci
+.venv/bin/python -m ensurepip
+.venv/bin/python -m pip install -r requirements-dev.txt
+```
+
+`npm run check` enforces ESLint rules (including ES5 syntax for PebbleKit JS),
+C checks with cpplint, and exact Prettier/clang-format output, then runs the tests.
+`npm run format` fixes formatting; `npm run lint:js` and `npm run lint:c` run the
+language checks separately. C checks focus on braces, multiline comments, and
+unsafe runtime calls; SDK compiler warnings remain part of the build check.
+The icon generator applies the same Prettier configuration to its output.
+
+```sh
+npm run check
 .venv/bin/pebble build
 cp build/pebble-codex-usage.pbw dist/codex-limits.pbw
 ```
