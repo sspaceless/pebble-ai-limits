@@ -1,4 +1,4 @@
-name: CI
+name: CI and Release
 
 on:
   push:
@@ -6,247 +6,24 @@ on:
       - main
   pull_request:
 
-env:
-  PEBBLE_SDK_VERSION: 4.33.1
-
 permissions:
   contents: read
 
 jobs:
   checks:
-    name: Checks (lint, format, tests)
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Check out source
-        uses: actions/checkout@v7
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: '3.13'
-          cache: pip
-          cache-dependency-path: |
-            requirements-dev.txt
-            .github/workflows/ci.yml
-
-      - name: Install JavaScript dependencies
-        run: npm ci
-
-      - name: Install check tools
-        run: |
-          python -m venv .venv
-          .venv/bin/python -m pip install -r requirements-dev.txt
-
-      - name: Run checks
-        run: npm run check
+    uses: ./.github/workflows/checks.yml
 
   pebble_build:
-    name: Build Pebble app (7 platforms)
-    runs-on: ubuntu-24.04
-    outputs:
-      release_version: ${{ steps.release_version.outputs.version }}
-    steps:
-      - name: Check out source
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: 22
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: '3.13'
-          cache: pip
-          cache-dependency-path: |
-            requirements-dev.txt
-            .github/workflows/ci.yml
-
-      - name: Install Pebble SDK system libraries
-        run: |
-          sudo apt-get update
-          sudo apt-get install --yes libsdl2-2.0-0 libglib2.0-0 libpixman-1-0 zlib1g libsndio7.0
-
-      - name: Cache Pebble SDK
-        uses: actions/cache@v5
-        with:
-          path: ~/.local/share/pebble-sdk
-          key: ${{ runner.os }}-${{ runner.arch }}-pebble-sdk-${{ env.PEBBLE_SDK_VERSION }}
-
-      - name: Set up Pebble build tools and SDK
-        run: |
-          python -m venv .venv
-          .venv/bin/python -m pip install --upgrade pip
-          .venv/bin/python -m pip install -r requirements-dev.txt pebble-tool==5.0.40
-          SDK_DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}"
-          if [ -d "$HOME/.pebble-sdk" ]; then
-            SDK_DATA_DIR="$HOME/.pebble-sdk"
-          fi
-          SDK_PATH="$SDK_DATA_DIR/pebble-sdk/SDKs/$PEBBLE_SDK_VERSION"
-          if [ -f "$SDK_PATH/sdk-core/manifest.json" ]; then
-            .venv/bin/pebble sdk activate "$PEBBLE_SDK_VERSION"
-          else
-            .venv/bin/pebble sdk install "$PEBBLE_SDK_VERSION"
-          fi
-
-      - name: Set automatic release version
-        id: release_version
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          VERSION_PREFIX="$(node -p "require('./package.json').version" | sed 's/\.[^.]*$//')"
-          RELEASE_VERSION="$VERSION_PREFIX.$(git rev-list --count "$GITHUB_SHA")"
-          echo "version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
-          npm version "$RELEASE_VERSION" --no-git-tag-version --allow-same-version
-
-      - name: Build Pebble app
-        run: .venv/bin/pebble build
-
-      - name: Prepare canonical Pebble build artifact
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          PBW_PATH="$(find . -type f -name '*.pbw' \
-            -not -path './.git/*' \
-            -not -path './.venv/*' \
-            -not -path './node_modules/*' \
-            -print -quit)"
-          if [ -z "$PBW_PATH" ]; then
-            echo "Pebble build did not produce a PBW. Found these PBW files:"
-            find . -type f -name '*.pbw' \
-              -not -path './.git/*' \
-              -not -path './.venv/*' \
-              -not -path './node_modules/*' \
-              -print
-            exit 1
-          fi
-          cp "$PBW_PATH" build/pebble-release-input.pbw
-
-      - name: Upload Pebble build outputs
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v7
-        with:
-          name: pebble-build
-          path: |
-            build/pebble-release-input.pbw
-            build/pebble-js-app.js.map
-          if-no-files-found: error
+    uses: ./.github/workflows/pebble-build.yml
+    with:
+      publish_release: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
 
   package_release:
-    name: Package release artifacts
+    name: Package and publish release
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs:
       - checks
       - pebble_build
-    runs-on: ubuntu-24.04
-    outputs:
-      release_version: ${{ needs.pebble_build.outputs.release_version }}
-    steps:
-      - name: Check out source
-        uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: '3.13'
-
-      - name: Download Pebble build outputs
-        uses: actions/download-artifact@v7
-        with:
-          name: pebble-build
-          path: build
-
-      - name: Package release artifacts
-        env:
-          RELEASE_VERSION: ${{ needs.pebble_build.outputs.release_version }}
-        run: |
-          PBW_PATH="$(find build -type f -name 'pebble-release-input.pbw' -print -quit)"
-          SOURCE_MAP_PATH="$(find build -type f -name 'pebble-js-app.js.map' -print -quit)"
-          if [ -z "$PBW_PATH" ] || [ -z "$SOURCE_MAP_PATH" ]; then
-            echo "Pebble build artifact is missing from the downloaded files:"
-            find build -type f -print
-            exit 1
-          fi
-
-          mkdir -p dist
-          python tools/package-release.py "$PBW_PATH" dist/codex-limits.pbw
-          cp "$SOURCE_MAP_PATH" dist/codex-limits.js.map
-          cp dist/codex-limits.pbw "dist/ai-limits-$RELEASE_VERSION.pbw"
-          cp dist/codex-limits.js.map "dist/ai-limits-$RELEASE_VERSION.js.map"
-          (
-            cd dist
-            sha256sum "ai-limits-$RELEASE_VERSION.pbw" "ai-limits-$RELEASE_VERSION.js.map" > "ai-limits-$RELEASE_VERSION.sha256"
-          )
-
-      - name: Upload release artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: release-artifacts
-          path: dist/ai-limits-*
-          if-no-files-found: error
-
-  publish_release:
-    name: Publish GitHub Release
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: package_release
-    runs-on: ubuntu-24.04
+    uses: ./.github/workflows/release.yml
     permissions:
       contents: write
-    steps:
-      - name: Download release artifacts
-        uses: actions/download-artifact@v7
-        with:
-          name: release-artifacts
-          path: dist
-
-      - name: Publish GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ needs.package_release.outputs.release_version }}
-        run: |
-          if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "Release v$VERSION already exists; skipping duplicate publication."
-            exit 0
-          fi
-
-          NOTES="$(cat <<EOF
-          ## AI Limits v$VERSION
-
-          Built from commit \`$GITHUB_SHA\` after the checks and seven-platform Pebble build passed.
-
-          ### Included files
-
-          - \`ai-limits-$VERSION.pbw\`: installable Pebble app for aplite, basalt, chalk, diorite, emery, flint, and gabbro.
-          - \`ai-limits-$VERSION.js.map\`: JavaScript source map for debugging.
-          - \`ai-limits-$VERSION.sha256\`: SHA-256 checksums for the PBW and source map.
-
-          ### Install
-
-          Download the PBW, transfer it to your paired phone, then install it using the Pebble mobile app.
-
-          ### Verify the downloads
-
-          Download all three files into the same directory and run:
-
-          \`\`\`sh
-          sha256sum -c ai-limits-$VERSION.sha256
-          \`\`\`
-          EOF
-          )"
-
-          gh release create "v$VERSION" \
-            "dist/ai-limits-$VERSION.pbw" \
-            "dist/ai-limits-$VERSION.js.map" \
-            "dist/ai-limits-$VERSION.sha256" \
-            --title "AI Limits $VERSION" \
-            --notes "$NOTES" \
-            --generate-notes \
-            --target "$GITHUB_SHA" \
-            --repo "$GITHUB_REPOSITORY"

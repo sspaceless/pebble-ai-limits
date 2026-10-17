@@ -95,19 +95,22 @@ Phone previews use a fixed PNG canvas of 500 × 1200 pixels at scale factor 1. `
 
 ## Release packaging
 
-GitHub Actions runs `npm run check` and the all-platform SDK build in separate
-parallel jobs on main branch pushes and pull requests. npm, pip, and the pinned
-Pebble SDK 4.33.1 are cached between runs; the build activates the cached SDK
-and installs it only on a cache miss. The build job derives the release version
-from the `package.json` major/minor prefix and commit count through the
-pushed revision, updates Pebble's `versionLabel`, and exports the raw PBW and
-source map. After both test and build jobs pass on a main push, a packaging job
-compresses the PBW and prepares versioned assets; the release job then
-publishes them. Bump the package version's major or minor component to start a
-new release line. Reruns of the same commit resolve to the same version and
-skip publication if its release already exists. The release job creates its
-tag against the exact commit that triggered the workflow using `GITHUB_TOKEN`;
-no provider credentials are required.
+`.github/workflows/ci.yml` defines the triggers and job dependency graph. It
+calls reusable workflows in `checks.yml`, `pebble-build.yml`, and `release.yml`
+to run `npm run check`, build all platforms, package release assets, and publish
+releases. The check and build jobs run in parallel on main pushes and pull
+requests. npm, pip, the Python Pebble build environment, and the pinned Pebble
+SDK 4.33.1 are cached between runs; the build activates the cached SDK and
+installs it only on a cache miss. The build job derives the release version
+from the `package.json` major/minor prefix and commit count through the pushed
+revision, updates Pebble's `versionLabel`, and exports the PBW, source map, and
+version metadata in one artifact. After both test and build jobs pass on a main
+push, the release workflow packages versioned assets and publishes them. Bump
+the package version's major or minor component to start a new release line.
+Reruns of the same commit resolve to the same version and skip publication if
+its release already exists. The release job creates its tag against the exact
+commit that triggered the workflow using `GITHUB_TOKEN`; no provider
+credentials are required.
 
 `npm run package:release` runs the Python standard-library tool
 `tools/package-release.py` against the existing SDK PBW. It produces a deflated

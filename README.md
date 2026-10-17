@@ -139,11 +139,14 @@ hooks if necessary, or `git hook run pre-commit` to check the installed hook
 without creating a commit.
 
 These are local checks and can be bypassed by Git options; shared validation
-runs in GitHub Actions. Pushes to `main` and pull requests run checks and build
-all seven Pebble platforms in separate parallel jobs. The workflow caches npm,
-Python packages, and the pinned Pebble SDK between runs. On `main`, a packaging
-job prepares the PBW, source map, and SHA-256 checksum; the following publish
-job uploads them to [GitHub Releases](https://github.com/sspaceless/pebble-ai-limits/releases)
+runs in GitHub Actions. `.github/workflows/ci.yml` orchestrates reusable check,
+Pebble-build, and release workflows. Pushes to `main` and pull requests run
+checks and build all seven Pebble platforms in separate parallel jobs. The
+workflow caches npm, Python packages, the Pebble build environment, and the
+pinned SDK between runs.
+On `main`, a packaging job prepares the PBW, source map, and SHA-256 checksum;
+the following publish job uploads them to [GitHub
+Releases](https://github.com/sspaceless/pebble-ai-limits/releases)
 after the test and build jobs pass. Release versions use `MAJOR.MINOR.N`, based on the
 `package.json` version and the Git commit count at the pushed revision. Bump
 `package.json` to `0.3.0` or `1.0.0` to start a new minor or major line.
