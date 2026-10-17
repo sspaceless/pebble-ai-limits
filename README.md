@@ -174,7 +174,7 @@ unsafe runtime calls; SDK compiler warnings remain part of the build check.
 The icon generator applies the same Prettier configuration to its output.
 Built-in ESLint rules check runtime application strings, magic numbers, and regex patterns;
 named values live in `src/pkjs/resources/`. Browser scripts are regular ES5 modules
-with explicit serialized constants. See [project architecture and conventions](docs/architecture.md), the [verification matrix](docs/verification.md), and [planned work](docs/TODO.md).
+with explicit serialized constants. See [project architecture and conventions](docs/architecture.md) and the [verification matrix](docs/verification.md).
 
 ```sh
 npm run check
