@@ -26,7 +26,7 @@ Gemini CLI quotas are for Gemini CLI / Code Assist, not the Gemini website's cha
 ## Install and connect
 
 1. Install the current [Pebble mobile app](https://repebble.com/app) and pair your watch.
-2. Build the installable package using [Building and testing](#building-and-testing), then transfer `dist/codex-limits.pbw` to your iPhone using AirDrop or Files, open or share it with Pebble, and install it from the locker. Install over the existing version when upgrading.
+2. Download the latest `ai-limits-*.pbw` from the [GitHub Releases](https://github.com/sspaceless/pebble-ai-limits/releases) page, then transfer it to your iPhone using AirDrop or Files, open or share it with Pebble, and install it from the locker. Install over the existing version when upgrading. To build from source, use [Building and testing](#building-and-testing).
 3. Open **AI Limits** settings, tap an account to select it, or expand **+ Add account**, select a connection type, and name the account.
 4. Connect the account using the instructions below.
 5. Open the app on the watch. **UP / DOWN** cycles through every account in the saved order, including accounts that are not connected yet; **SELECT** refreshes the active account.
@@ -138,9 +138,13 @@ the hook does not auto-fix or stage files. Run `npm run prepare` to reinstall th
 hooks if necessary, or `git hook run pre-commit` to check the installed hook
 without creating a commit.
 
-These are local checks and can be bypassed by Git options; mandatory shared
-validation requires CI and branch protection. The Pebble SDK build remains a
-separate check because it requires the full SDK environment.
+These are local checks and can be bypassed by Git options; shared validation
+runs in GitHub Actions. Pushes to `main` and pull requests run the
+checks and build all seven Pebble platforms. A tag such as `v0.1.0` must match
+the version in `package.json`; pushing it publishes the installable PBW, its
+JavaScript source map, and a SHA-256 checksum to [GitHub Releases](https://github.com/sspaceless/pebble-ai-limits/releases).
+The SDK build also runs there. Locally, it remains a separate check because it
+requires the full SDK environment.
 
 `npm run check` enforces ESLint rules (including ES5 syntax for PebbleKit JS),
 C checks with cpplint, and exact Prettier/clang-format output, then runs the tests.

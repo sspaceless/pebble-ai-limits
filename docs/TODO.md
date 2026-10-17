@@ -25,7 +25,7 @@
 
 - [x] Install Husky pre-commit hooks that require ESLint, C lint, formatting checks, and tests to pass.
 
-- [ ] Set up CI to build the Pebble app, run tests, and publish release artifacts to GitHub Releases, starting release versions at `0.*.*`.
+- [x] Set up CI to build the Pebble app, run tests, and publish release artifacts to GitHub Releases, starting release versions at `0.*.*`.
 - [x] Add `AGENTS.md` and supporting files with project guidance for AI agents.
 
 ## P3 — Project presentation and resources

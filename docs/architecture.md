@@ -95,6 +95,13 @@ Phone previews use a fixed PNG canvas of 500 × 1200 pixels at scale factor 1. `
 
 ## Release packaging
 
+GitHub Actions runs `npm run check` and builds all configured platforms on main
+branch pushes, pull requests, and version tags matching `v0.*.*`. A release tag
+must exactly match the package version, which also supplies Pebble's
+`versionLabel`. Tag builds package the SDK PBW, keep its JavaScript source map
+beside it, and publish both with a SHA-256 checksum to GitHub Releases using the
+repository's `GITHUB_TOKEN`; no provider credentials are required.
+
 `npm run package:release` runs the Python standard-library tool
 `tools/package-release.py` against the existing SDK PBW. It produces a deflated
 `dist/codex-limits.pbw` containing every SDK entry except the companion source map,

@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v0.*.*'
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check-and-build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install Pebble SDK system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes libsdl2-2.0-0 libglib2.0-0 libpixman-1-0 zlib1g libsndio7.0
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Install Pebble build tools
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install --upgrade pip
+          .venv/bin/python -m pip install -r requirements-dev.txt pebble-tool==5.0.40
+          .venv/bin/pebble sdk install latest
+
+      - name: Check package version matches release tag
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          test "$RELEASE_TAG" = "v$VERSION"
+
+      - name: Run checks
+        run: npm run check
+
+      - name: Build Pebble app
+        run: .venv/bin/pebble build
+
+      - name: Package release artifacts
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          cp dist/codex-limits.pbw "dist/ai-limits-$VERSION.pbw"
+          cp dist/codex-limits.js.map "dist/ai-limits-$VERSION.js.map"
+          sha256sum "dist/ai-limits-$VERSION.pbw" "dist/ai-limits-$VERSION.js.map" > "dist/ai-limits-$VERSION.sha256"
+
+      - name: Upload release artifacts
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: dist/ai-limits-*
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: check-and-build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: dist
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ github.ref_name }}
+        run: >-
+          gh release create "$VERSION"
+          "dist/ai-limits-${VERSION#v}.pbw"
+          "dist/ai-limits-${VERSION#v}.js.map"
+          "dist/ai-limits-${VERSION#v}.sha256"
+          --title "AI Limits $VERSION"
+          --generate-notes
