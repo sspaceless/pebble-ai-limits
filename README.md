@@ -1,8 +1,16 @@
 # AI Limits for Pebble
 
+[![CI](https://github.com/sspaceless/pebble-ai-limits/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sspaceless/pebble-ai-limits/actions/workflows/ci.yml) [![Latest release](https://img.shields.io/github/v/release/sspaceless/pebble-ai-limits)](https://github.com/sspaceless/pebble-ai-limits/releases/latest) [![License: MIT](https://img.shields.io/github/license/sspaceless/pebble-ai-limits)](LICENSE) ![Pebble platforms](https://img.shields.io/badge/Pebble%20platforms-7-blue)
+
 A native watch app for **Codex, Claude, Gemini CLI, Claude API, Gemini API, and custom providers**. It shows subscription quota percentages and reset countdowns, or configured API caps with their units. The white screen retains compact typography, provider marks, and a filled synchronization icon.
 
 The app runs through the paired phone. Multiple named accounts are supported for every provider. Each profile stores its own credentials and cached quota snapshot. Existing single-account connections migrate automatically to profiles named Personal; the app keeps its original UUID and is now listed as **AI Limits**.
+
+See the app at a glance: quota details on the watch and account management in the phone companion. These previews use demonstration data.
+
+| On the watch | In phone settings |
+| --- | --- |
+| <img src="preview/watches/emery/codex.png" alt="Codex quota screen on a Time 2 watch" width="190"> | <img src="preview/phone/settings.png" alt="AI Limits account settings on phone" width="190"> |
 
 ## Provider support
 
