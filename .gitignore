@@ -1,0 +1,9 @@
+build/
+dist/
+.env
+.sdk/
+.venv/
+node_modules/
+__pycache__/
+.DS_Store
+.lock-waf*

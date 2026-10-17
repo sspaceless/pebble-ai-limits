@@ -1,0 +1,58 @@
+{
+  "name": "pebble-codex-usage",
+  "version": "1.5.24",
+  "author": "Illia",
+  "description": "Subscription usage and API quota caps for AI providers on Pebble",
+  "keywords": [
+    "pebble-app"
+  ],
+  "private": true,
+  "scripts": {
+    "generate:icons": "node tools/generate-provider-icons.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check:direct": "node tools/check-direct.mjs",
+    "check:gemini": "node tools/check-gemini.mjs"
+  },
+  "pebble": {
+    "displayName": "AI Limits",
+    "uuid": "c8dca1a8-6d05-4c0e-a85a-f2f8a3457468",
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "targetPlatforms": [
+      "aplite",
+      "basalt",
+      "chalk",
+      "diorite",
+      "emery",
+      "flint",
+      "gabbro"
+    ],
+    "watchapp": {
+      "watchface": false
+    },
+    "capabilities": [
+      "configurable"
+    ],
+    "messageKeys": {
+      "REQUEST": 0,
+      "P_LEFT": 1,
+      "P_RESET": 2,
+      "S_LEFT": 4,
+      "S_RESET": 5,
+      "UPDATED": 7,
+      "STATUS": 8,
+      "PROVIDER": 9,
+      "PROVIDER_NAME": 10,
+      "P_VALUE": 11,
+      "S_VALUE": 12,
+      "P_NOTE": 13,
+      "S_NOTE": 14,
+      "NAV": 15,
+      "ACCOUNT_ID": 16,
+      "ACCOUNT_NAME": 17,
+      "ACCOUNT_REV": 18,
+      "UPDATING": 21,
+      "ACCOUNT_COUNT": 22
+    }
+  }
+}
