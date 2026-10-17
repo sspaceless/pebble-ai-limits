@@ -96,12 +96,13 @@ Phone previews use a fixed PNG canvas of 500 × 1200 pixels at scale factor 1. `
 ## Release packaging
 
 `.github/workflows/ci.yml` defines the triggers and job dependency graph. It
-calls reusable workflows in `checks.yml`, `pebble-build.yml`, and `release.yml`
-to run `npm run check`, build all platforms, package release assets, and publish
-releases. Checks run on every main push and pull request. A path filter gates
-the Pebble build and release on changes to `src/**`, `wscript`, the npm
-manifests, release packaging, or workflow files; documentation, previews, and
-canonical assets alone do not build or release the app. npm, pip, the Python
+calls reusable workflows in `detect-app-changes.yml`, `checks.yml`,
+`pebble-build.yml`, and `release.yml` to detect app build changes, run
+`npm run check`, build all platforms, package release assets, and publish
+releases. Checks run on every main push and pull request. The reusable path
+filter gates the Pebble build and release on changes to `src/**`, `wscript`, the
+npm manifests, release packaging, or workflow files; documentation, previews,
+and canonical assets alone do not build or release the app. npm, pip, the Python
 Pebble build environment, and the pinned Pebble SDK 4.33.1 are cached between
 runs; the build activates the cached SDK and installs it only on a cache miss.
 The build job derives the release version

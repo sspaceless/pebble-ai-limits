@@ -80,6 +80,11 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Check out repository history
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
       - name: Download release artifacts
         uses: actions/download-artifact@v7
         with:
@@ -96,16 +101,28 @@ jobs:
             exit 0
           fi
 
-          NOTES="$(cat <<EOF
+          PREVIOUS_TAG="$(gh release list --limit 1 --json tagName --jq '.[0].tagName // empty')"
+          if [ -n "$PREVIOUS_TAG" ]; then
+            RANGE="$PREVIOUS_TAG..$GITHUB_SHA"
+            gh api --method POST "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
+              --field tag_name="v$VERSION" \
+              --field target_commitish="$GITHUB_SHA" \
+              --field previous_tag_name="$PREVIOUS_TAG" \
+              --jq .body > dist/generated-release-notes.md
+          else
+            RANGE="$GITHUB_SHA"
+            gh api --method POST "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
+              --field tag_name="v$VERSION" \
+              --field target_commitish="$GITHUB_SHA" \
+              --jq .body > dist/generated-release-notes.md
+          fi
+
+          git log --reverse --format='- `%h` %s' "$RANGE" > dist/commits.md
+
+          cat > dist/release-notes.md <<EOF
           ## AI Limits v$VERSION
 
           Built from commit \`$GITHUB_SHA\` after the checks and seven-platform Pebble build passed.
-
-          ### Included files
-
-          - \`ai-limits-$VERSION.pbw\`: installable Pebble app for aplite, basalt, chalk, diorite, emery, flint, and gabbro.
-          - \`ai-limits-$VERSION.js.map\`: JavaScript source map for debugging.
-          - \`ai-limits-$VERSION.sha256\`: SHA-256 checksums for the PBW and source map.
 
           ### Install
 
@@ -118,15 +135,18 @@ jobs:
           \`\`\`sh
           sha256sum -c ai-limits-$VERSION.sha256
           \`\`\`
+
+          ### Commits since ${PREVIOUS_TAG:-the beginning of repository history}
           EOF
-          )"
+          cat dist/commits.md >> dist/release-notes.md
+          printf '\n### GitHub-generated release notes\n\n' >> dist/release-notes.md
+          cat dist/generated-release-notes.md >> dist/release-notes.md
 
           gh release create "v$VERSION" \
             "dist/ai-limits-$VERSION.pbw" \
             "dist/ai-limits-$VERSION.js.map" \
             "dist/ai-limits-$VERSION.sha256" \
             --title "AI Limits $VERSION" \
-            --notes "$NOTES" \
-            --generate-notes \
+            --notes-file dist/release-notes.md \
             --target "$GITHUB_SHA" \
             --repo "$GITHUB_REPOSITORY"

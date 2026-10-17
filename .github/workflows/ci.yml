@@ -11,34 +11,10 @@ permissions:
 
 jobs:
   changes:
-    name: Detect app build changes
-    runs-on: ubuntu-24.04
+    uses: ./.github/workflows/detect-app-changes.yml
     permissions:
       contents: read
       pull-requests: read
-    outputs:
-      app: ${{ steps.filter.outputs.app }}
-    steps:
-      - name: Check out source
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Filter app build inputs
-        uses: dorny/paths-filter@v4
-        id: filter
-        with:
-          base: ${{ github.ref }}
-          predicate-quantifier: 'some-with-excludes'
-          filters: |
-            app:
-              - 'src/**'
-              - 'wscript'
-              - 'package.json'
-              - 'package-lock.json'
-              - 'tools/package-release.py'
-              - '.github/workflows/**'
-              - '!**/*.md'
 
   checks:
     uses: ./.github/workflows/checks.yml

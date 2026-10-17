@@ -29,10 +29,11 @@ hooks if necessary, or `git hook run pre-commit` to check the installed hook
 without creating a commit.
 
 These are local checks and can be bypassed by Git options; shared validation
-runs in GitHub Actions. `.github/workflows/ci.yml` orchestrates reusable check,
-Pebble-build, and release workflows. Pushes to `main` and pull requests always
-run checks. Changes to app source, build manifests, release packaging, or
-workflow files also build all seven Pebble platforms. Changes limited to
+runs in GitHub Actions. `.github/workflows/ci.yml` orchestrates reusable
+change detection, check, Pebble-build, and release workflows. Pushes to `main`
+and pull requests always run checks. Changes to app source, build manifests,
+release packaging, or workflow files also build all seven Pebble platforms.
+Changes limited to
 Markdown, canonical assets, or previews skip the build and release. The
 workflow caches npm, Python packages, the Pebble build environment, and the
 pinned SDK between runs.
@@ -44,7 +45,8 @@ after the test and build jobs pass. Release versions use `MAJOR.MINOR.N`, based 
 `package.json` to `0.3.0` or `1.0.0` to start a new minor or major line.
 Rerunning CI for the same commit reuses its version and skips an already
 published release; pull requests do not publish. Each release includes a brief
-installation guide, the CI commit, a generated changelog, and a SHA-256 file.
+installation guide, the CI commit, GitHub-generated release notes, a list of
+commits since the previous release, and a SHA-256 file.
 Download all three assets into one directory and run
 `sha256sum -c ai-limits-VERSION.sha256` to verify the PBW and sourcemap.
 Locally, the SDK build remains a separate check because it requires the full
