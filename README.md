@@ -207,11 +207,23 @@ npm run check:gemini
 
 These checks never print credentials or save them to this repository. The Gemini check refreshes an access token in memory if necessary, then reads account/quota metadata without changing the CLI credential file.
 
-The automated tests cover provider parsing, missing data, model selection, API caps versus remaining quota, Google pagination, OAuth imports/renewal, source timestamps, account isolation, migration, renaming, deletion, independent token rotation, login binding, cancellation, switching during requests, account reordering, staying on the settings page during edits, and atomic settings saves without overwriting renewed credentials. Codex has been checked against a real account. Retained emulator previews cover Claude and Gemini CLI on Classic, Time, and Time Round using simulated data. Current Codex, API-cap, progress-animation, and sync-rotation captures still need to be refreshed. Claude and API-provider adapters require account-specific device testing; the available local Gemini account returned HTTP 403 with `SUBSCRIPTION_REQUIRED` during the live check. This account cannot validate live Gemini quotas; eligible credentials are required. Full iOS 27 login/import and background behavior still require testing on a physical phone.
+The automated tests cover provider parsing, missing data, model selection, API caps versus remaining quota, Google pagination, OAuth imports/renewal, source timestamps, account isolation, migration, renaming, deletion, independent token rotation, login binding, cancellation, switching during requests, account reordering, staying on the settings page during edits, and atomic settings saves without overwriting renewed credentials. Codex has been checked against a real account. Current emulator previews cover all six provider screens on all seven SDK platforms using demonstration data; they do not verify authentication. Current progress and sync animation captures still need to be refreshed. Claude and API-provider adapters require account-specific device testing; the available local Gemini account returned HTTP 403 with `SUBSCRIPTION_REQUIRED` during the live check. This account cannot validate live Gemini quotas; eligible credentials are required. Full iOS 27 login/import and background behavior still require testing on a physical phone.
 
 ## Preview assets
 
-[`preview/`](preview/README.md) groups watch screenshots and GIF animations by SDK platform under `watches/`; phone settings screenshots live under `phone/`, with standalone icon studies under `icons/` only when needed. Keep previews as images rather than saved HTML pages. Phone previews use PNG at a fixed 500 × 1200 pixels and demo data. Two show the account list; the other five use standalone page renderers still present in the code, so they do not show the inline editing flow used by the main settings page. Run `npm run generate:previews:phone` to regenerate the full set when the interface changes.
+[`preview/`](preview/README.md) groups watch screenshots and GIF animations by SDK platform under `watches/`; phone settings screenshots live under `phone/`, with standalone icon studies under `icons/` only when needed. Keep previews as images rather than saved HTML pages. Phone previews use PNG at a fixed 500 × 1200 pixels and demonstration data. Two show the account list; four show account creation, rename, connection, and device login inline on the main settings page. Run `npm run generate:previews:phone` to regenerate the full set when the interface changes.
+
+### Watch app preview
+
+These Time 2 emulator captures show the six provider screens with demonstration data. They do not verify provider authentication. See [all platform screenshots](preview/README.md).
+
+| Codex | Claude | Gemini CLI |
+| --- | --- | --- |
+| ![Codex quota screen](preview/watches/emery/codex.png) | ![Claude quota screen](preview/watches/emery/claude.png) | ![Gemini CLI quota screen](preview/watches/emery/gemini.png) |
+
+| Claude API | Gemini API | Custom endpoint |
+| --- | --- | --- |
+| ![Claude API caps screen](preview/watches/emery/claude-api.png) | ![Gemini API caps screen](preview/watches/emery/gemini-api.png) | ![Custom quota screen](preview/watches/emery/custom.png) |
 
 ## Sources
 

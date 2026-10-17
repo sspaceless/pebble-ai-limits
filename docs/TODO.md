@@ -34,9 +34,9 @@
 - [x] Organize watch previews by SDK platform; separate phone screenshots and icon studies.
 - [x] Standardize all phone previews as 500 × 1200 PNGs with a repeatable, overflow-checked generator.
 
-- [ ] Prepare all required metadata and assets for the Pebble Store listing.
+- [x] Prepare all required metadata and assets for the Pebble Store listing; see [listing draft](store-listing.md). The draft covers all seven platform collections using current emulator screenshots; dashboard submission and publishing remain release steps.
 - [x] Document development checks and build instructions in the README.
-- [ ] Add an embedded project preview to the GitHub README.
-- [ ] Update the phone-preview generator to capture the main settings page's inline account-creation, rename, connection, and device-login flows, then regenerate the screenshots.
+- [x] Add an embedded project preview to the GitHub README using current Time 2 emulator captures for all six provider screens.
+- [x] Update the phone-preview generator to capture the main settings page's inline account-creation, rename, connection, and device-login flows, then regenerate the screenshots.
 - [ ] Capture current progress and sync animations. All six provider screens are captured on all seven SDK platforms; see [`preview/README.md`](../preview/README.md).
 - [x] Remove obsolete preview assets and old icon studies; regenerate phone previews and fix stale paths in `assets/BRANDS.md`.

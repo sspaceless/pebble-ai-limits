@@ -27,7 +27,7 @@ const DEMO_LABEL = 'Work';
 const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 const DIMENSIONS_OFFSET = { width: 16, height: 20 };
 const MEASUREMENT =
-  '<script>document.documentElement.setAttribute("data-preview-height", String(document.documentElement.scrollHeight));document.documentElement.setAttribute("data-preview-width", String(document.documentElement.scrollWidth));</script>';
+  '<script>document.documentElement.setAttribute("data-preview-height", String(document.documentElement.scrollHeight));document.documentElement.setAttribute("data-preview-width", String(document.documentElement.scrollWidth));document.documentElement.setAttribute("data-preview-scroll", String(window.scrollY));</script>';
 
 /** Capture the normal account-list UI after selecting a demonstration profile. */
 function accountList(connected) {
@@ -50,6 +50,28 @@ function accountList(connected) {
     );
 }
 
+/** Compose the real settings page with a deterministic inline WebView state. */
+function inlineSettings(state, interaction) {
+  return pages
+    .settings(state)
+    .replace(
+      '</body>',
+      '<script>Element.prototype.scrollIntoView=function(){};' +
+        interaction +
+        ';document.documentElement.style.scrollBehavior="auto";window.scrollTo(0,0);</script></body>'
+    );
+}
+
+function settingsState(codexConnected) {
+  return {
+    selectedId: DEMO_ID,
+    accounts: [
+      { id: DEMO_ID, provider: 'codex', label: DEMO_LABEL, configured: codexConnected !== false },
+      { id: 'demo-claude', provider: 'claude', label: 'Personal', configured: false }
+    ]
+  };
+}
+
 /** Run an isolated browser against local HTML without loading personal browser state. */
 function render(profile, page, options) {
   const result = spawnSync(
@@ -62,6 +84,7 @@ function render(profile, page, options) {
       '--disable-background-networking',
       '--disable-sync',
       '--disable-extensions',
+      '--disable-smooth-scrolling',
       '--force-device-scale-factor=1',
       '--user-data-dir=' + profile,
       '--window-size=' + SIZE.width + ',' + SIZE.height,
@@ -86,11 +109,32 @@ try {
   const scenarios = {
     settings: accountList(false),
     connected: accountList(true),
-    'add-account': pages.accountName('codex'),
-    'rename-account': pages.accountName('codex', { id: DEMO_ID, label: DEMO_LABEL }),
-    login: pages.device({ label: DEMO_LABEL, userCode: 'DEMO-ONLY' }),
-    'claude-api': pages.credentials('claude-api', { id: 'demo-claude-api', label: DEMO_LABEL }),
-    gemini: pages.credentials('gemini', { id: 'demo-gemini', label: DEMO_LABEL })
+    'add-account': inlineSettings(
+      settingsState(),
+      'document.querySelector(".add-account").open=true;' +
+        'document.getElementById("provider-toggle").click();' +
+        'document.querySelector("[data-provider=claude]").click();' +
+        'document.getElementById("add-name").value="Research";'
+    ),
+    'rename-account': inlineSettings(
+      settingsState(),
+      'closePage({action:"renameAccount",accountId:"demo-claude"});' +
+        'document.getElementById("edit-name").blur();'
+    ),
+    connection: inlineSettings(
+      settingsState(),
+      'closePage({action:"login",accountId:"demo-claude"});'
+    ),
+    login: inlineSettings(
+      settingsState(false),
+      'var demoRequestCount=0;window.XMLHttpRequest=function(){this.open=function(){};' +
+        'this.setRequestHeader=function(){};this.send=function(){demoRequestCount++;' +
+        'if(demoRequestCount>1)return;this.status=200;this.responseText=JSON.stringify({' +
+        'device_auth_id:"demo-auth",user_code:"DEMO-ONLY",interval:5,expires_in:600});' +
+        'this.onload();};this.abort=function(){};};' +
+        'closePage({action:"login",accountId:"demo-codex"});' +
+        'document.getElementById("start-codex-login").click();'
+    )
   };
 
   for (const [name, html] of Object.entries(scenarios)) {
@@ -102,14 +146,16 @@ try {
     const dom = render(profile, page, ['--dump-dom']);
     const height = dom.match(/data-preview-height="(\d+)"/);
     const width = dom.match(/data-preview-width="(\d+)"/);
+    const scroll = dom.match(/data-preview-scroll="(\d+)"/);
 
-    assert.ok(height && width, name + ': missing layout measurements');
+    assert.ok(height && width && scroll, name + ': missing layout measurements');
+    assert.equal(Number(scroll[1]), 0, name + ': preview should start at the top of settings.');
     assert.ok(
       Number(height[1]) <= SIZE.height && Number(width[1]) <= SIZE.width,
       name + ': page exceeds the shared viewport; update SIZE for all phone captures.'
     );
 
-    render(profile, page, ['--screenshot=' + image]);
+    render(profile + '-capture', page, ['--screenshot=' + image]);
     const bytes = await readFile(image);
 
     assert.ok(
@@ -133,6 +179,12 @@ try {
 
   for (const name of Object.keys(scenarios)) {
     await copyFile(join(temporary, name + '.png'), join(OUTPUT, name + '.png'));
+  }
+
+  const obsoleteStandaloneScenarios = ['claude-api', 'gemini'];
+
+  for (const name of obsoleteStandaloneScenarios) {
+    await rm(join(OUTPUT, name + '.png'), { force: true });
   }
 
   console.log(

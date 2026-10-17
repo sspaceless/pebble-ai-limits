@@ -12,7 +12,7 @@ preview/
 │   ├── emery/    Time 2
 │   ├── flint/    Pebble 2 Duo
 │   └── gabbro/   Round 2
-└── phone/        Account-list and standalone-page screenshots
+└── phone/        Account-list and inline-flow screenshots
 ```
 
 ## Watch platforms
@@ -33,9 +33,9 @@ For new platforms, add their first real screenshot under `watches/<SDK platform>
 
 ## Phone screenshots
 
-[`phone/`](phone/) contains seven screenshots generated on 17 October 2026 from page renderers exported by `src/pkjs/config.js`. `settings.png` and `connected.png` show the account list. The other five captures use standalone account-creation, rename, device-code, and Claude API/Gemini connection pages still present in the code. The main settings page now performs these actions inline, so those five captures do not represent its current editing flow. Capturing the inline flows requires updating the generator scenarios first; rerunning the existing command alone will reproduce the standalone pages.
+[`phone/`](phone/) contains six screenshots generated on 18 October 2026 from the main settings page exported by `src/pkjs/config.js`. `settings.png` and `connected.png` show the account list. `add-account.png`, `rename-account.png`, `connection.png`, and `login.png` show the account-creation, rename, Claude connection, and Codex device-login flows inline on that same page. The device-login screen uses a simulated `DEMO-ONLY` code; no provider authentication is performed.
 
-The account-list captures show the normal client-side rendering after selecting a demo profile. Initial and subsequent account-list rendering now both create real nested markup while escaping account labels. All names and the `DEMO-ONLY` login code are demonstration data; no provider authentication was performed.
+The account-list captures show the normal client-side rendering after selecting a demo profile. Initial and subsequent account-list rendering both create real nested markup while escaping account labels. All names and the login code are demonstration data.
 
 All phone previews use the same format and canvas: **PNG, 500 × 1200 pixels, scale factor 1**. Pages keep their natural layout at the top of the shared viewport; shorter pages retain the normal page background below their content. Captures are not stretched or cropped.
 
