@@ -15,10 +15,12 @@
     "lint:js": "eslint . --max-warnings 0",
     "lint:c": ".venv/bin/cpplint --recursive src/c",
     "lint": "npm run lint:js && npm run lint:c && npm run format:check",
-    "format:js": "prettier --write \"src/pkjs/**/*.js\" \"tools/*.mjs\" \"tests/*.mjs\" \"*.mjs\" \"*.json\"",
+    "format:js": "npm run lint:js:fix && prettier --write \"src/pkjs/**/*.js\" \"tools/*.mjs\" \"tests/*.mjs\" \"*.mjs\" \"*.json\"",
     "format": "npm run format:js && node tools/format-c.mjs --write",
     "format:check": "prettier --check \"src/pkjs/**/*.js\" \"tools/*.mjs\" \"tests/*.mjs\" \"*.mjs\" \"*.json\" && node tools/format-c.mjs",
-    "check": "npm run lint && npm test"
+    "check": "npm run lint && npm test",
+    "lint:js:fix": "eslint . --fix --max-warnings 0",
+    "prepare": "husky"
   },
   "pebble": {
     "displayName": "AI Limits",
@@ -66,6 +68,7 @@
     "@eslint/js": "10.0.1",
     "eslint": "10.13.0",
     "globals": "17.13.0",
+    "husky": "9.1.7",
     "prettier": "3.9.10"
   },
   "engines": {
