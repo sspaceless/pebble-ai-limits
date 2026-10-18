@@ -21,7 +21,7 @@ with tempfile.TemporaryDirectory() as directory:
     source = root / 'sdk.pbw'
     destination = root / 'dist' / 'release.pbw'
     entries = {
-        'appinfo.json': b'{}',
+        'appinfo.json': b'{"resources":{"media":[]}}',
         'pebble-js-app.js': b'var example = 1;\\n' * 1000,
         'pebble-js-app.js.map': b'{"version":3}',
     }
@@ -55,6 +55,15 @@ with tempfile.TemporaryDirectory() as directory:
     try:
         module.package_release(source, destination)
         raise AssertionError('Accepted incomplete bundle')
+    except ValueError:
+        pass
+    assert destination.read_bytes() == first
+    with zipfile.ZipFile(source, 'w') as archive:
+        for name, data in entries.items():
+            archive.writestr(name, b'{}' if name == 'appinfo.json' else data)
+    try:
+        module.package_release(source, destination)
+        raise AssertionError('Accepted appinfo without resources.media')
     except ValueError:
         pass
     assert destination.read_bytes() == first

@@ -1,6 +1,7 @@
 """Package an SDK PBW for release without changing executable payloads."""
 
 import argparse
+import json
 import os
 from pathlib import Path
 import tempfile
@@ -23,6 +24,10 @@ def package_release(source, destination):
         for required in ("appinfo.json", "pebble-js-app.js", SOURCE_MAP):
             if required not in names:
                 raise ValueError(f"Missing SDK bundle entry: {required}")
+        appinfo = json.loads(original.read("appinfo.json"))
+        resources = appinfo.get("resources") if isinstance(appinfo, dict) else None
+        if not isinstance(resources, dict) or not isinstance(resources.get("media"), list):
+            raise ValueError("SDK bundle appinfo.json must declare resources.media")
         # Read everything before publishing, including ZIP CRC validation.
         entries = [(info, original.read(info)) for info in original.infolist()]
     destination.parent.mkdir(parents=True, exist_ok=True)
