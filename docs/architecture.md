@@ -105,16 +105,26 @@ npm manifests, release packaging, or workflow files; documentation, previews,
 and canonical assets alone do not build or release the app. npm, pip, the Python
 Pebble build environment, and the pinned Pebble SDK 4.33.1 are cached between
 runs; the build activates the cached SDK and installs it only on a cache miss.
-The build job derives the release version
-from the `package.json` major/minor prefix and commit count through the pushed
-revision, updates Pebble's `versionLabel`, and exports the PBW, source map, and
-version metadata in one artifact. After both test and build jobs pass on a main
-push, the release workflow packages versioned assets and publishes them. Bump
-the package version's major or minor component to start a new release line.
-Reruns of the same commit resolve to the same version and skip publication if
-its release already exists. The release job creates its tag against the exact
-commit that triggered the workflow using `GITHUB_TOKEN`; no provider
-credentials are required.
+`package.json` sets the initial version of a release line. On a qualifying main
+push, `tools/release-version.py` reads the latest release commit in that line and
+increments the patch component; the first release uses the package version.
+The build job writes that version into its temporary npm manifests, then checks
+the PBW's embedded `versionLabel` before exporting it with the source map and
+version metadata. The release job recomputes the version from the source commit
+and checks the exported value. After tests and build pass, it commits the updated
+npm manifests to `main` with a `Release-Source` marker, then publishes the PBW
+and GitHub release tag from that version commit. The tag, asset names, source
+manifests, and installed PBW have the same version.
+The `0.3.x` release line is intentionally below the legacy `1.5.24` and local
+`1.6.0` builds. Compatibility when installing over those builds needs a device
+check; otherwise later releases should increase the version for the same app UUID.
+Reruns of the same source commit recover its existing release commit or skip an
+already published release. A newer app change on `main` supersedes an older
+source build; documentation-only changes can remain in the release commit. The
+release job pushes its version commit using `GITHUB_TOKEN`, which
+does not trigger another workflow run. Repository rules must allow that push;
+no provider credentials are required. Bump the package major or minor component
+to start a new release line.
 
 `npm run package:release` runs the Python standard-library tool
 `tools/package-release.py` against the existing SDK PBW. It produces a deflated
@@ -122,5 +132,7 @@ credentials are required.
 which is retained as `dist/codex-limits.js.map`. Runtime JavaScript, platform
 binaries, resources, manifests, and checksums are unchanged. The SDK output is
 never overwritten; rebuild it before packaging. Packaging validates ZIP CRCs and
-compares retained entry bytes before replacing the release PBW. Tests cover all
+compares retained entry bytes before replacing the release PBW. The app metadata
+declares `resources.media` even when empty, which the Pebble mobile app requires
+when parsing a sideloaded PBW. Packaging rejects bundles missing that field. Tests cover all
 seven platform payloads, repeatability, and rejection of incomplete input.

@@ -89,10 +89,9 @@ jobs:
         id: release_version
         if: inputs.publish_release
         run: |
-          VERSION_PREFIX="$(node -p "require('./package.json').version" | sed 's/\.[^.]*$//')"
-          RELEASE_VERSION="$VERSION_PREFIX.$(git rev-list --count "$GITHUB_SHA")"
+          RELEASE_VERSION="$(.venv/bin/python tools/release-version.py)"
           echo "version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
-          npm version "$RELEASE_VERSION" --no-git-tag-version --allow-same-version
+          npm version "$RELEASE_VERSION" --no-git-tag-version --allow-same-version --ignore-scripts
 
       - name: Build Pebble app
         run: .venv/bin/pebble build
@@ -116,6 +115,16 @@ jobs:
               -print
             exit 1
           fi
+          python - "$PBW_PATH" "$RELEASE_VERSION" <<'PY'
+          import json
+          import sys
+          import zipfile
+
+          with zipfile.ZipFile(sys.argv[1]) as bundle:
+              actual = json.loads(bundle.read("appinfo.json"))["versionLabel"]
+          if actual != sys.argv[2]:
+              raise SystemExit(f"PBW version {actual} does not match release {sys.argv[2]}")
+          PY
           cp "$PBW_PATH" build/pebble-release-input.pbw
           printf '%s\n' "$RELEASE_VERSION" > build/release-version.txt
 

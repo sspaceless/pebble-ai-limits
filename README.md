@@ -26,10 +26,12 @@ These previews use demonstration data. See [all watch and phone screenshots](pre
 ## Install and connect
 
 1. Install the [Pebble mobile app](https://repebble.com/app) and pair your watch.
-2. Download the latest `ai-limits-*.pbw` from [GitHub Releases](https://github.com/sspaceless/pebble-ai-limits/releases/latest). Transfer it to your iPhone using AirDrop or Files, open or share it with Pebble, and install it from the locker. Install over the existing version when upgrading.
+2. Download the latest `ai-limits-*.pbw` from [GitHub Releases](https://github.com/sspaceless/pebble-ai-limits/releases/latest). The release tag, PBW filename, and app version use the same number. Transfer the PBW to your iPhone using AirDrop or Files, open or share it with Pebble, and install it from the locker. Install over the existing version when upgrading.
 3. Open **AI Limits** settings, expand **+ Add account**, choose a provider, and name the account.
 4. Follow the [connection instructions](docs/providers.md), then tap **Save and close**.
 5. On the watch, use **UP / DOWN** to switch accounts and **SELECT** to refresh. Data also refreshes every five minutes while the app is open.
+
+The prepared `0.3.0` PBW includes `resources` metadata required by Pebble 1.15 on iPhone. Earlier `0.2.x` PBWs omitted it and caused `Error while sideloading app`. The correction was confirmed with a compressed local test PBW on a Pebble Classic with firmware 3.13 through Pebble for iPhone 1.15.0.1; installation of the `0.3.0` build still needs confirmation. Because `0.3.0` is numerically lower than the older `1.5.24` and local `1.6.0` builds, installation over those versions also needs a device check.
 
 In phone settings, drag account handles to reorder them, or focus a handle and use Arrow Up / Arrow Down. The **⋯** menu lets you rename, reconnect, or remove an account. **Save connection** stages credentials; **Save and close** saves all changes. **Cancel** closes the active form and keeps settings open.
 

@@ -11,3 +11,7 @@ Before changing validation commands, coverage, or verification status, read `doc
 Before changing user-visible behavior, provider support, or installation and usage instructions, read `README.md` and update affected claims in the same change.
 
 Before adding or changing provider marks, read `assets/BRANDS.md` and follow its source and generation guidance.
+
+## Commit messages
+
+When creating a commit, follow the Conventional Commits rule in `docs/development.md`.

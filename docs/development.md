@@ -28,6 +28,11 @@ the hook does not auto-fix or stage files. Run `npm run prepare` to reinstall th
 hooks if necessary, or `git hook run pre-commit` to check the installed hook
 without creating a commit.
 
+Use Conventional Commits for new commit subjects: `type: description` or
+`type(scope): description`. Common types are `feat`, `fix`, `docs`, `test`,
+`refactor`, `ci`, and `chore`. Write a short, imperative description without a
+trailing period, such as `fix: include Pebble resources metadata in PBW`.
+
 These are local checks and can be bypassed by Git options; shared validation
 runs in GitHub Actions. `.github/workflows/ci.yml` orchestrates reusable
 change detection, check, Pebble-build, and release workflows. Pushes to `main`
@@ -40,12 +45,33 @@ pinned SDK between runs.
 For qualifying pushes to `main`, a packaging job prepares the PBW, source map,
 and SHA-256 checksum; the following publish job uploads them to [GitHub
 Releases](https://github.com/sspaceless/pebble-ai-limits/releases)
-after the test and build jobs pass. Release versions use `MAJOR.MINOR.N`, based on the
-`package.json` version and the Git commit count at the pushed revision. Bump
-`package.json` to `0.3.0` or `1.0.0` to start a new minor or major line.
-Rerunning CI for the same commit reuses its version and skips an already
-published release; pull requests do not publish. Each release includes a brief
-installation guide, the CI commit, GitHub-generated release notes, a list of
+after the test and build jobs pass. The first release of a line uses the version
+in `package.json`; later releases increment its patch number automatically. CI
+commits the new version to `package.json` and `package-lock.json` on `main` before
+tagging the release, so the source manifests, PBW, tag, and asset names agree.
+To start any new release line, choose its major and minor numbers with a zero
+patch component, then run this command in the repository (replace `MAJOR` and
+`MINOR` with numbers):
+
+```sh
+npm version MAJOR.MINOR.0 --no-git-tag-version --ignore-scripts
+```
+
+This updates `package.json` and `package-lock.json` together. Commit the change
+and push it to `main`, or merge it through a pull request. If the corresponding
+tag does not already exist, the first release uses `MAJOR.MINOR.0`; subsequent
+qualifying releases increment only the patch component. Choose a new major or
+minor number to start another line.
+
+The requested `0.3.x` line is below the older `1.5.24` and local test `1.6.0`
+builds, so upgrading over those versions requires a device check.
+Rerunning CI for the same source commit recovers or skips its existing release;
+when a newer app change supersedes an older run, only the newer source is
+released. Documentation-only changes do not supersede the built app. The CI
+token needs permission to push the release version commit to
+`main`; branch protection may require a repository setting change. Pull requests
+do not publish. Each release includes a brief
+installation guide, the source and release commits, GitHub-generated release notes, a list of
 commits since the previous release, and a SHA-256 file.
 Download all three assets into one directory and run
 `sha256sum -c ai-limits-VERSION.sha256` to verify the PBW and sourcemap.
@@ -72,11 +98,17 @@ npm run package:release
 bundle using ZIP deflate compression. It preserves all runtime payloads and all
 seven platforms byte for byte, and saves the debug source map separately as
 `dist/codex-limits.js.map`. Keep that map with the matching release for diagnosis.
+Packaging rejects a PBW whose `appinfo.json` lacks `resources.media`, because
+Pebble 1.15 on iPhone requires that field when sideloading. When changing
+`package.json` Pebble metadata, run `pebble clean` before rebuilding to ensure
+the PBW contains fresh `appinfo.json`.
 The original SDK bundle and build source map remain in `build/`. Always build
 before packaging to avoid releasing stale code. The measured package shrank from
 589 KiB to 86.8 KiB; future sizes depend on the source. Archive integrity is tested;
-installation of the compressed release through the mobile app still needs a
-physical-device check. The original SDK PBW remains available for comparison.
+installation of a corrected compressed local PBW succeeded on one Pebble Classic
+through Pebble for iPhone 1.15.0.1. The hosted CI release still needs its own
+download and installation check. The original SDK PBW remains available for
+comparison.
 
 If message keys change, regenerate cached SDK output:
 
